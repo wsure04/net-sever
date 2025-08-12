@@ -26,13 +26,13 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    int listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    int listenfd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
     if(listenfd < 0)
     {
         perror("listen");
         return -1;
     }
-    setnoblock(listenfd);
+    //setnoblock(listenfd);
     int opt = 1;
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     setsockopt(listenfd, SOL_SOCKET, TCP_NODELAY, &opt, sizeof(opt));
@@ -80,27 +80,29 @@ int main(int argc, char *argv[])
         {
             for(int i = 0; i < infd; i++)
             {
-                if(eps[i].data.fd == listenfd)//处理监听事件
+                //处理读写事件
+                if(eps[i].events & EPOLLRDHUP)
                 {
-                    struct sockaddr_in client_addr;
-                    bzero(&client_addr, sizeof(client_addr));
-                    socklen_t client_len = sizeof(client_addr);
-                    int clientfd = accept(listenfd, (sockaddr*)&client_addr, &client_len);
-                    char str[INET_ADDRSTRLEN];
-                    printf("客户端(fd:%d, ip:%s, port:%d)连接\n", eps[i].data.fd, inet_ntop(AF_INET, &client_addr.sin_addr, str, INET_ADDRSTRLEN), ntohs(client_addr.sin_port));
-                    setnoblock(clientfd);
-                    ep.events = EPOLLIN | EPOLLET;
-                    ep.data.fd = clientfd;
-                    epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &ep);
+                    printf("客户端(%d)已关闭\n", eps[i].data.fd);
+                    close(eps[i].data.fd);//关闭客户端
                 }
-                else//处理读写事件
+                else if(eps[i].events & EPOLLIN|EPOLLPRI)
                 {
-                    if(eps[i].events & EPOLLRDHUP)
+                    if(eps[i].data.fd == listenfd)//处理监听事件 监听事件也是读事件
                     {
-                        printf("客户端(%d)已关闭\n", eps[i].data.fd);
-                        close(eps[i].data.fd);//关闭客户端
+                        struct sockaddr_in client_addr;
+                        bzero(&client_addr, sizeof(client_addr));
+                        socklen_t client_len = sizeof(client_addr);
+                        int clientfd = accept4(listenfd, (sockaddr*)&client_addr, &client_len, SOCK_NONBLOCK);//自动设置非阻塞
+
+                        char str[INET_ADDRSTRLEN];
+                        printf("客户端(fd:%d, ip:%s, port:%d)连接\n", eps[i].data.fd, inet_ntop(AF_INET, &client_addr.sin_addr, str, INET_ADDRSTRLEN), ntohs(client_addr.sin_port));
+
+                        ep.events = EPOLLIN | EPOLLET;
+                        ep.data.fd = clientfd;
+                        epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &ep);
                     }
-                    else if(eps[i].events & EPOLLIN|EPOLLPRI)
+                    else
                     {
                         char buf[BUFSIZ];
                         //注意 使用的是非阻塞io
@@ -129,15 +131,15 @@ int main(int argc, char *argv[])
                             }
                         }
                     }
-                    else if(eps[i].events & EPOLLOUT)
+                }
+                else if(eps[i].events & EPOLLOUT)
                     {
 
                     }
-                    else//其他是为错误
-                    {
-                        printf("client(%d) error\n", eps[i].data.fd);
-                        close(eps[i].data.fd);
-                    }
+                else//其他是为错误
+                {
+                    printf("client(%d) error\n", eps[i].data.fd);
+                    close(eps[i].data.fd);
                 }
             }
         }
