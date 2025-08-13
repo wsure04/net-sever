@@ -15,6 +15,8 @@ class InetAddress
 };
 */
 
+InetAddress::InetAddress(){};
+
 InetAddress::InetAddress(const std::string &ip, const uint16_t port)
 {
     addr_.sin_family = AF_INET;
@@ -38,3 +40,8 @@ const sockaddr *InetAddress::addr() const
 {
     return (sockaddr*)&addr_;
 }//返回转换的地址 可以用于传入bind
+
+void InetAddress::setAddr(sockaddr_in client_addr)
+{
+    addr_ = client_addr;
+}

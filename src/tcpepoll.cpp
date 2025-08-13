@@ -9,6 +9,7 @@
 #include<sys/types.h>
 #include<unistd.h>
 #include"InetAddress.h"
+#include"Socket.h"
 using std::cout;using std::endl;
 
 void setnoblock(int fd)
@@ -27,40 +28,25 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    int listenfd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
-    if(listenfd < 0)
-    {
-        perror("listen");
-        return -1;
-    }
-    //setnoblock(listenfd);
-    int opt = 1;
-    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    setsockopt(listenfd, SOL_SOCKET, TCP_NODELAY, &opt, sizeof(opt));
-    setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
-
-    //sockaddr_in serv_addr;
-    //bzero(&serv_addr, sizeof(serv_addr));
-    //serv_addr.sin_family = AF_INET;
-    //serv_addr.sin_port = htons(atoi(argv[1]));
-    //serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    InetAddress serv_addr(argv[1], atoi(argv[2]));
-    if(bind(listenfd, serv_addr.addr(), sizeof(sockaddr)) < 0)
-    {
-        perror("bind");
-        return -1;
-    }
-
-    if(listen(listenfd, 128) < 0)
-    {
-        perror("listen");
-        return -1;
-    }
+    Socket serv_sock(createNonblocking());//封装好的套接字
+    InetAddress serv_addr(argv[1], atoi(argv[2]));//封装好的地址结构
+    //设置sock属性
+    const bool on = true;
+    serv_sock.setReuseAddr(on);
+    serv_sock.setReusePort(on);
+    serv_sock.setTcpNodelay(on);
+    serv_sock.setKeepAlive(on);
+    //绑定地址结构
+    serv_sock.bind(serv_addr);
+    //设置监听上限
+    serv_sock.listen();
+    //创建epoll句柄
     int epfd = epoll_create(1);
+
     epoll_event ep;
     ep.events = EPOLLIN;
-    ep.data.fd = listenfd;
-    epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &ep);
+    ep.data.fd = serv_sock.fd();
+    epoll_ctl(epfd, EPOLL_CTL_ADD, serv_sock.fd(), &ep);
     epoll_event eps[1024];
     int infd = 0;
     while(true)
@@ -90,20 +76,17 @@ int main(int argc, char *argv[])
                 }
                 else if(eps[i].events & EPOLLIN|EPOLLPRI)
                 {
-                    if(eps[i].data.fd == listenfd)//处理监听事件 监听事件也是读事件
+                    if(eps[i].data.fd == serv_sock.fd())//处理监听事件 监听事件也是读事件
                     {
-                        struct sockaddr_in peer_addr;
-                        bzero(&peer_addr, sizeof(peer_addr));
-                        socklen_t client_len = sizeof(peer_addr);
-                        int clientfd = accept4(listenfd, (sockaddr*)&peer_addr, &client_len, SOCK_NONBLOCK);//自动设置非阻塞
+                        InetAddress client_addr;
+                        //接收客户端socket
+                        Socket *client_sock = new Socket(serv_sock.accept(client_addr));
 
-                        InetAddress client_addr(peer_addr);
-
-                        printf("客户端(fd:%d, ip:%s, port:%d)连接\n", eps[i].data.fd, client_addr.ip(), client_addr.port());
+                        printf("客户端(fd:%d, ip:%s, port:%d)连接\n", client_sock->fd(), client_addr.ip(), client_addr.port());
 
                         ep.events = EPOLLIN | EPOLLET;
-                        ep.data.fd = clientfd;
-                        epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &ep);
+                        ep.data.fd = client_sock->fd();
+                        epoll_ctl(epfd, EPOLL_CTL_ADD, client_sock->fd(), &ep);
                     }
                     else
                     {
