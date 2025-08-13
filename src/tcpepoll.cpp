@@ -8,6 +8,7 @@
 #include<fcntl.h>
 #include<sys/types.h>
 #include<unistd.h>
+#include"InetAddress.h"
 using std::cout;using std::endl;
 
 void setnoblock(int fd)
@@ -20,9 +21,9 @@ void setnoblock(int fd)
 
 int main(int argc, char *argv[])
 {
-    if(argc != 2)
+    if(argc != 3)
     {
-        cout << "请输入端口号：\n";
+        cout << "请输入ip地址 端口号\n";
         return -1;
     }
 
@@ -38,12 +39,13 @@ int main(int argc, char *argv[])
     setsockopt(listenfd, SOL_SOCKET, TCP_NODELAY, &opt, sizeof(opt));
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
 
-    sockaddr_in serv_addr;
-    bzero(&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(atoi(argv[1]));
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    if(bind(listenfd, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
+    //sockaddr_in serv_addr;
+    //bzero(&serv_addr, sizeof(serv_addr));
+    //serv_addr.sin_family = AF_INET;
+    //serv_addr.sin_port = htons(atoi(argv[1]));
+    //serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    InetAddress serv_addr(argv[1], atoi(argv[2]));
+    if(bind(listenfd, serv_addr.addr(), sizeof(sockaddr)) < 0)
     {
         perror("bind");
         return -1;
@@ -90,13 +92,14 @@ int main(int argc, char *argv[])
                 {
                     if(eps[i].data.fd == listenfd)//处理监听事件 监听事件也是读事件
                     {
-                        struct sockaddr_in client_addr;
-                        bzero(&client_addr, sizeof(client_addr));
-                        socklen_t client_len = sizeof(client_addr);
-                        int clientfd = accept4(listenfd, (sockaddr*)&client_addr, &client_len, SOCK_NONBLOCK);//自动设置非阻塞
+                        struct sockaddr_in peer_addr;
+                        bzero(&peer_addr, sizeof(peer_addr));
+                        socklen_t client_len = sizeof(peer_addr);
+                        int clientfd = accept4(listenfd, (sockaddr*)&peer_addr, &client_len, SOCK_NONBLOCK);//自动设置非阻塞
 
-                        char str[INET_ADDRSTRLEN];
-                        printf("客户端(fd:%d, ip:%s, port:%d)连接\n", eps[i].data.fd, inet_ntop(AF_INET, &client_addr.sin_addr, str, INET_ADDRSTRLEN), ntohs(client_addr.sin_port));
+                        InetAddress client_addr(peer_addr);
+
+                        printf("客户端(fd:%d, ip:%s, port:%d)连接\n", eps[i].data.fd, client_addr.ip(), client_addr.port());
 
                         ep.events = EPOLLIN | EPOLLET;
                         ep.data.fd = clientfd;
