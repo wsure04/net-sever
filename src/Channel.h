@@ -2,6 +2,8 @@
 #include<sys/socket.h>
 #include<sys/epoll.h>
 #include"Epoll.h"
+#include"InetAddress.h"
+#include"Socket.h"
 
 class Epoll;
 
@@ -13,8 +15,9 @@ class Channel//将channel的地址作为epoll携带的数据
         bool inepoll_ = false;//channel是否已经添加到红黑树上 如果已经添加 用ADD 否则用MOD
         uint32_t events_ = 0;//fd_需要监视的事件
         uint32_t revents_ = 0;//fd已经发生的事件
+        bool islisten_ = false;//如果是listenfd取值为true
     public:
-        Channel(Epoll*ep, int fd);
+        Channel(Epoll*ep, int fd, bool islisten);
         ~Channel();
 
         int fd();
@@ -25,4 +28,6 @@ class Channel//将channel的地址作为epoll携带的数据
         bool inpoll();
         uint32_t events();
         uint32_t revents();
+
+        void handleEvent(Socket* serv_sock);//事件处理函数 epoll_wait()返回的时候，执行它
 };
