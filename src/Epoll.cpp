@@ -39,6 +39,8 @@ void Epoll::addfd(int fd, uint32_t op)
         exit(-1);
     }
 }//把 fd和监听的事件 添加到红黑树上
+
+/*
 std::vector<epoll_event> Epoll::loop(int timeout)
 {
     std::vector<epoll_event> evs;//存放epoll_wait返回的事件
@@ -63,3 +65,57 @@ std::vector<epoll_event> Epoll::loop(int timeout)
     }
     return evs;
 }//运行epoll_wait 发生的事件用vector返回
+*/
+
+std::vector<Channel*> Epoll::loop(int timeout)
+{
+    std::vector<Channel*> channels;//存放epoll_wait返回的事件
+    bzero(events_, sizeof(events_));
+    int infd = epoll_wait(epollfd_, events_, MaxEvents, timeout);
+    if(infd < 0)//事件失败
+    {
+        perror("epoll_wait failed");
+        exit(-1);
+    }
+
+    if(infd == 0)//超时 轮询等待连接
+    {
+        printf("epoll_wait timeout\n");
+        return channels;//返回空的数组对象
+    }
+
+    //成功检测到事件
+    for(int i = 0; i < infd; i++)
+    {
+        //channels.push_back(events_[i]);
+        Channel *ch = (Channel*)events_[i].data.ptr;
+        ch->setRevents(events_[i].events);
+        channels.push_back(ch);
+    }
+    return channels;
+}
+
+void Epoll::updateChannel(Channel* ch)//将Channel添加或更新到红黑树上 Channel中也有fd
+{
+    epoll_event ev;
+    ev.data.ptr = ch;
+    ev.events = ch->events();
+
+    if(ch->inpoll())//如果channel在树上
+    {
+        if(epoll_ctl(epollfd_, EPOLL_CTL_MOD, ch->fd(), &ev) == -1)
+        {
+            printf("epoll_ctl() failed\n");
+            exit(-1);
+        }
+    }
+    else//如果不在树上
+    {
+        if(epoll_ctl(epollfd_, EPOLL_CTL_ADD, ch->fd(), &ev) == -1)
+        {
+            printf("epoll_ctl() failed\n");
+            exit(-1);
+        }
+        ch->setInepoll();//设置标志位
+    }
+}

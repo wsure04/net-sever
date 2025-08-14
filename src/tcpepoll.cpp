@@ -44,23 +44,26 @@ int main(int argc, char *argv[])
     serv_sock.listen();
     //创建epoll句柄
     Epoll ep;
-    ep.addfd(serv_sock.fd(), EPOLLIN);
-    std::vector<epoll_event> evs;//接收有事件的对象
+    //ep.addfd(serv_sock.fd(), EPOLLIN);
+    Channel* serv_channel = new Channel(&ep, serv_sock.fd());
+    serv_channel->enableReading();
     while(true)
     {
-        evs = ep.loop();//等待事件
+
+        //std::vector<epoll_event> evs;//接收有事件的对象
+        std::vector<Channel*> channels = ep.loop();//等待事件
         
-        for(auto &ev : evs)
+        for(auto &ch : channels)
         {
             //处理读写事件
-            if(ev.events & EPOLLRDHUP)
+            if(ch->revents() & EPOLLRDHUP)
                 {
-                    printf("客户端(%d)已关闭\n", ev.data.fd);
-                    close(ev.data.fd);//关闭客户端
+                    printf("客户端(%d)已关闭\n", ch->fd());
+                    close(ch->fd());//关闭客户端
                 }
-            else if(ev.events & EPOLLIN|EPOLLPRI)
+            else if(ch->revents() & EPOLLIN|EPOLLPRI)
             {
-                if(ev.data.fd == serv_sock.fd())//处理监听事件 监听事件也是读事件
+                if(ch->fd() == serv_sock.fd())//处理监听事件 监听事件也是读事件
                 {
                     InetAddress client_addr;
                     //接收客户端socket
@@ -68,7 +71,10 @@ int main(int argc, char *argv[])
 
                     printf("客户端(fd:%d, ip:%s, port:%d)连接\n", client_sock->fd(), client_addr.ip(), client_addr.port());
 
-                    ep.addfd(client_sock->fd(), EPOLLIN | EPOLLET);
+                    //ep.addfd(client_sock->fd(), EPOLLIN | EPOLLET);
+                    Channel* client_channel = new Channel(&ep, client_sock->fd());
+                    client_channel->useET();
+                    client_channel->enableReading();
                 }
                 else
                 {
@@ -78,11 +84,11 @@ int main(int argc, char *argv[])
                     while(true)
                     {
                         bzero(buf, sizeof(buf));
-                        readn = recv(ev.data.fd, buf, sizeof(buf), 0);
+                        readn = recv(ch->fd(), buf, sizeof(buf), 0);
                         if(readn == 0)
                         {    
-                            printf("客户端(%d)已关闭\n", ev.data.fd);
-                            close(ev.data.fd);//关闭客户端
+                            printf("客户端(%d)已关闭\n", ch->fd());
+                            close(ch->fd());//关闭客户端
                         }
                         else if(readn == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))//数据读取完毕 非阻塞立即返回跳出
                         {
@@ -94,20 +100,20 @@ int main(int argc, char *argv[])
                         }
                         else if(readn > 0)//读取到了数据
                         {
-                            printf("接收到数据(来自:%d)：%s\n", ev.data.fd, buf);
-                            send(ev.data.fd, buf, strlen(buf), 0);
+                            printf("接收到数据(来自:%d)：%s\n", ch->fd(), buf);
+                            send(ch->fd(), buf, strlen(buf), 0);
                         }
                     }
                 }
             }
-            else if(ev.events & EPOLLOUT)
+            else if(ch->revents() & EPOLLOUT)
             {
 
             }
             else//其他是为错误
             {
-                printf("client(%d) error\n", ev.data.fd);
-                close(ev.data.fd);
+                printf("client(%d) error\n", ch->fd());
+                close(ch->fd());
             }
         }
         
