@@ -1,0 +1,170 @@
+# ======================================
+# Arch Linux C++ 网络服务器专用 .gitignore
+# 仓库位置: netserver/.gitignore
+# 适用目录结构: src/ 包含所有源代码
+# ======================================
+
+###  🚀 编译生成文件 ###
+# 可执行文件
+*.out
+*.bin
+a.out
+tcpepoll
+client
+
+# 对象文件
+*.o
+*.lo
+*.ko
+*.obj
+
+# 链接库文件
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# CMake/Make 生成文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+Makefile
+CTestTestfile.cmake
+
+# Autotools 生成文件
+autom4te.cache/
+aclocal.m4
+compile
+configure
+depcomp
+install-sh
+missing
+config.log
+config.status
+libtool
+stamp-h1
+
+###  🧰 构建目录 ###
+build/
+bin/
+dist/
+out/
+release/
+debug/
+ipch/
+*.autopkg
+
+###  💻 Arch Linux 特定文件 ###
+.pacman/
+*.pkg.tar*
+*.pkg.tar.xz
+*.src.tar.gz
+*.zst
+/etc/*.pacnew
+/var/lib/pacman/
+__pycache__/  # 虽然主要用C++，但可能有Python工具
+
+###  🔧 开发工具文件 ###
+# GCC/GDB
+*.gcno
+*.gcda
+*.gch
+*.gdblist
+*.gdb_history
+
+# Clang/LLVM
+*.dSYM/
+*.plist
+*.bc
+
+# Valgrind
+valgrind-*.log
+
+# Systemd
+*.service
+
+### 📁 目录忽略 ###
+.vscode/
+.idea/
+.vs/
+.clion/
+*.code-workspace
+.kdev4/
+*.kdev4
+
+###  📝 文档生成 ###
+doc/html/
+doc/latex/
+doxygen/
+
+### 📊 数据文件 ###
+*.csv
+*.dat
+*.data
+*.db
+*.dump
+*.log
+*.sql
+*.sqlite
+*.sqlite3
+
+###  📦 打包文件 ###
+*.7z
+*.dmg
+*.gz
+*.iso
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.deb
+*.rpm
+
+###  🖼 系统文件 ###
+.DS_Store
+.Trash-*
+.Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+###  🔒 敏感文件 ###
+*.env
+*.secret
+*.key
+*.cert
+*.pem
+*.cfg
+config.*
+credentials.*
+
+###  🧪 测试相关 ###
+coverage/
+*.gcov
+*.profdata
+*.profraw
+*.test
+test-results/
+
+###  🧹 临时文件 ###
+*~
+*.bak
+*.old
+*.orig
+*.rej
+*.swo
+*.swp
+*.tmp
+*.user
+*.kate-swp
+.fuse_hidden*
+.nfs*
+
+###  📌 特别说明 ###
+# 已忽略所有编译产物，请确保：
+# 1. 在 README.md 中提供编译说明
+# 2. 使用 CMake 或 Makefile 管理构建
+# 3. 重要配置文件通过 samples/ 目录提供示例
