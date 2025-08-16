@@ -35,7 +35,8 @@ void EventLoop::run()
     
 } //运行事件循环
 
-Epoll* EventLoop::ep()
+
+void EventLoop::updateChannel(Channel* ch)//将Channel添加或更新到红黑树上 Channel中也有fd 对应addfd
 {
-    return ep_;
-}//返回epoll成员
+    ep_->updateChannel(ch);
+}

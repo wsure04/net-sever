@@ -47,10 +47,10 @@ int main(int argc, char *argv[])
     //创建epoll句柄
     EventLoop loop;
 
-    Channel* serv_channel = new Channel(loop.ep(), serv_sock.fd());
+    Channel* serv_channel = new Channel(&loop, serv_sock.fd());
     serv_channel->setCallback(std::bind(&Channel::newConnection, serv_channel, &serv_sock));
     serv_channel->enableReading();
-    
+
     loop.run();
 
     return 0;

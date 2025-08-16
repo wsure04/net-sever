@@ -2,24 +2,25 @@
 #include<sys/socket.h>
 #include<sys/epoll.h>
 #include<functional>
-#include"Epoll.h"
+#include"EventLoop.h"
 #include"InetAddress.h"
 #include"Socket.h"
 
-class Epoll;
+class EventLoop;
 
 class Channel//将channel的地址作为epoll携带的数据
 {
     private:
         int fd_ = -1; //一对一
-        Epoll *ep_ = nullptr;//channel与epoll多对一 一个channel对应一个epoll
+        //Epoll *ep_ = nullptr;//channel与epoll多对一 一个channel对应一个epoll
+        EventLoop *loop_ = nullptr;
         bool inepoll_ = false;//channel是否已经添加到红黑树上 如果已经添加 用ADD 否则用MOD
         uint32_t events_ = 0;//fd_需要监视的事件
         uint32_t revents_ = 0;//fd已经发生的事件
         //bool islisten_ = false;//如果是listenfd取值为true
         std::function<void()> readcallback_;
     public:
-        Channel(Epoll*ep, int fd);
+        Channel(EventLoop *loop, int fd);
         ~Channel();
 
         int fd();

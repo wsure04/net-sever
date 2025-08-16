@@ -24,7 +24,7 @@ class Channel//将channel的地址作为epoll携带的数据
 };
 */
 
-Channel::Channel(Epoll*ep, int fd):ep_(ep), fd_(fd){}//初始化成员变量
+Channel::Channel(EventLoop *loop, int fd):loop_(loop), fd_(fd){}//初始化成员变量
 Channel::~Channel()
 {
     //在析构函数中 不要销毁ep_ fd_ 因为这两个东西不属于Channel类 只是需要他们
@@ -44,7 +44,8 @@ void Channel::useET()//设置采用边缘触发
 void Channel::enableReading()//让epoll_wait监听fd_的读事件
 {
     events_= events_ | EPOLLIN;
-    ep_->updateChannel(this);//将自己挂到树上   
+    //loop_->ep()->updateChannel(this);//将自己挂到树上   
+    loop_->updateChannel(this);
 }
 
 void Channel::setInepoll() //设置inepoll未true
@@ -104,7 +105,7 @@ void Channel::newConnection(Socket* serv_sock)//处理连接事件
 
     printf("客户端(fd:%d, ip:%s, port:%d)连接\n", client_sock->fd(), client_addr.ip(), client_addr.port());
 
-    Channel* client_channel = new Channel(ep_, client_sock->fd());
+    Channel* client_channel = new Channel(loop_, client_sock->fd());
     client_channel->setCallback(std::bind(&Channel::onMessage, client_channel));
     client_channel->useET();
     client_channel->enableReading();
