@@ -1,5 +1,5 @@
 target=tcpepoll client
-include=InetAddress.cpp Socket.cpp Epoll.cpp Channel.cpp EventLoop.cpp
+include=InetAddress.cpp Socket.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp
 all:$(target)
 
 tcpepoll:tcpepoll.cpp $(include)

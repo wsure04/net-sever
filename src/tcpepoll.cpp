@@ -1,4 +1,6 @@
+
 #include<iostream>
+/*
 #include<netinet/tcp.h>
 #include<sys/socket.h>
 #include<errno.h>
@@ -13,15 +15,9 @@
 #include"Socket.h"
 #include"Epoll.h"
 #include"EventLoop.h"
+*/
+#include"TcpServer.h"
 using std::cout;using std::endl;
-
-void setnoblock(int fd)
-{
-    if(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) == -1)
-    {
-        perror("fcntl");
-    }
-}
 
 int main(int argc, char *argv[])
 {
@@ -31,27 +27,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    Socket serv_sock(createNonblocking());//封装好的套接字
-    InetAddress serv_addr(argv[1], atoi(argv[2]));//封装好的地址结构
-    //设置sock属性
-    const bool on = true;
-    serv_sock.setReuseAddr(on);
-    serv_sock.setReusePort(on);
-    serv_sock.setTcpNodelay(on);
-    serv_sock.setKeepAlive(on);
-    //绑定地址结构
-    serv_sock.bind(serv_addr);
-    //设置监听上限
-    serv_sock.listen();
+    TcpServer tcp_server(argv[1], atoi(argv[2]));
 
-    //创建epoll句柄
-    EventLoop loop;
-
-    Channel* serv_channel = new Channel(&loop, serv_sock.fd());
-    serv_channel->setCallback(std::bind(&Channel::newConnection, serv_channel, &serv_sock));
-    serv_channel->enableReading();
-
-    loop.run();
+    tcp_server.start();
 
     return 0;
 }
