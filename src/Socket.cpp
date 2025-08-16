@@ -22,9 +22,9 @@ class Socket
 */
 
 
-int createNonblocking()
+int createNonblocking()//获得一个用于监听的套接字 并且设置为非阻塞（用于初始化）
 {
-     int listenfd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
+    int listenfd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
     if(listenfd < 0)
     {
         //perror("socket failed");
@@ -35,7 +35,7 @@ int createNonblocking()
 }//创建非阻塞的socket
 
     Socket::Socket(int fd):fd_(fd){}
-    Socket::~Socket()
+    Socket::~Socket()//程序执行完毕 释放资源
     {
         ::close(fd_);
     }
@@ -44,12 +44,12 @@ int createNonblocking()
     {
         return fd_;
     }//返回fd成员
-    void  Socket::setReuseAddr(bool on)
+    void  Socket::setReuseAddr(bool on)//设置地址复用
     {
         int opt = on ? 1 : 0;
         ::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     }//设置SO_REUSEADDR true-打开
-    void  Socket::setReusePort(bool on)
+    void  Socket::setReusePort(bool on)//设置端口复用
     {
         int opt = on ? 1 : 0;
         ::setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
@@ -59,13 +59,13 @@ int createNonblocking()
         int opt = on ? 1 : 0;
         ::setsockopt(fd_, SOL_SOCKET, TCP_NODELAY, &opt, sizeof(opt));
     }//设置TCP_NODELAY true-打开
-    void  Socket::setKeepAlive(bool on)
+    void  Socket::setKeepAlive(bool on)//设置保活机制
     {
         int opt = on ? 1 : 0;
         ::setsockopt(fd_, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt));
     }//设置SO_KEEPALIVE true-打开
 
-    void  Socket::bind(const InetAddress& serv_addr)
+    void  Socket::bind(const InetAddress& serv_addr)//绑定地址结构
     {
         if(::bind(fd_, serv_addr.addr(), sizeof(sockaddr)) < 0)
         {
@@ -74,7 +74,7 @@ int createNonblocking()
             exit(-1);
         }
     }
-    void  Socket::listen(int n)
+    void  Socket::listen(int n)//封装listen函数 包含错误检查
     {
         if(::listen(fd_, n) < 0)
         {
@@ -83,7 +83,7 @@ int createNonblocking()
             exit(-1);
         }
     }
-    int  Socket::accept(InetAddress& client_addr)
+    int  Socket::accept(InetAddress& client_addr)//client_addr为传出参数 
     {
         sockaddr_in peer_addr;
         bzero(&peer_addr, sizeof(peer_addr));

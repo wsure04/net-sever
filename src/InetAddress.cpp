@@ -15,9 +15,9 @@ class InetAddress
 };
 */
 
-InetAddress::InetAddress(){};
+InetAddress::InetAddress(){};//空的构造函数 用于构造一个空对象 用来接收数据
 
-InetAddress::InetAddress(const std::string &ip, const uint16_t port)
+InetAddress::InetAddress(const std::string &ip, const uint16_t port)//初始化用于连接的结构体
 {
     addr_.sin_family = AF_INET;
     addr_.sin_port = htons(port);
@@ -41,7 +41,7 @@ const sockaddr *InetAddress::addr() const
     return (sockaddr*)&addr_;
 }//返回转换的地址 可以用于传入bind
 
-void InetAddress::setAddr(sockaddr_in client_addr)
+void InetAddress::setAddr(sockaddr_in client_addr)//为InetAddress赋值
 {
     addr_ = client_addr;
 }

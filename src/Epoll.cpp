@@ -14,7 +14,7 @@
 };*/
 
 
-Epoll::Epoll()
+Epoll::Epoll()//创建epoll句柄
 {
     //创建epoll句柄
     if((epollfd_ = epoll_create(1)) == -1)
@@ -23,12 +23,12 @@ Epoll::Epoll()
         exit(-1);
     }
 }//在构造函数中创建 epollfd
-Epoll::~Epoll()
+Epoll::~Epoll()//释放句柄
 {
     ::close(epollfd_);
 }//在析构函数中 关闭epollfd
 
-void Epoll::addfd(int fd, uint32_t op)
+void Epoll::addfd(int fd, uint32_t op)//将监听的fd挂到红黑树上
 {
     epoll_event ev;
     ev.events = op;
@@ -67,7 +67,7 @@ std::vector<epoll_event> Epoll::loop(int timeout)
 }//运行epoll_wait 发生的事件用vector返回
 */
 
-std::vector<Channel*> Epoll::loop(int timeout)
+std::vector<Channel*> Epoll::loop(int timeout)//将有时间的fd 封装为channel返回
 {
     std::vector<Channel*> channels;//存放epoll_wait返回的事件
     bzero(events_, sizeof(events_));
@@ -95,7 +95,7 @@ std::vector<Channel*> Epoll::loop(int timeout)
     return channels;
 }
 
-void Epoll::updateChannel(Channel* ch)//将Channel添加或更新到红黑树上 Channel中也有fd
+void Epoll::updateChannel(Channel* ch)//将Channel添加或更新到红黑树上 Channel中也有fd 对应addfd
 {
     epoll_event ev;
     ev.data.ptr = ch;

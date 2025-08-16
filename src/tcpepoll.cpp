@@ -44,7 +44,8 @@ int main(int argc, char *argv[])
     serv_sock.listen();
     //创建epoll句柄
     Epoll ep;
-    Channel* serv_channel = new Channel(&ep, serv_sock.fd(), true);
+    Channel* serv_channel = new Channel(&ep, serv_sock.fd());
+    serv_channel->setCallback(std::bind(&Channel::newConnection, serv_channel, &serv_sock));
     serv_channel->enableReading();
     while(true)
     {
@@ -54,7 +55,7 @@ int main(int argc, char *argv[])
         for(auto &ch : channels)
         {
             //处理读写事件
-            ch->handleEvent(&serv_sock);
+            ch->handleEvent();
         }
         
     }
