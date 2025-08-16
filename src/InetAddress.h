@@ -20,4 +20,5 @@ class InetAddress
         const sockaddr *addr() const;//返回转换的地址
 
         void setAddr(sockaddr_in client_addr);
+
 };

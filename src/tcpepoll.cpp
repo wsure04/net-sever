@@ -12,6 +12,7 @@
 #include"InetAddress.h"
 #include"Socket.h"
 #include"Epoll.h"
+#include"EventLoop.h"
 using std::cout;using std::endl;
 
 void setnoblock(int fd)
@@ -42,22 +43,15 @@ int main(int argc, char *argv[])
     serv_sock.bind(serv_addr);
     //设置监听上限
     serv_sock.listen();
+
     //创建epoll句柄
-    Epoll ep;
-    Channel* serv_channel = new Channel(&ep, serv_sock.fd());
+    EventLoop loop;
+
+    Channel* serv_channel = new Channel(loop.ep(), serv_sock.fd());
     serv_channel->setCallback(std::bind(&Channel::newConnection, serv_channel, &serv_sock));
     serv_channel->enableReading();
-    while(true)
-    {
+    
+    loop.run();
 
-        std::vector<Channel*> channels = ep.loop();//等待事件
-        
-        for(auto &ch : channels)
-        {
-            //处理读写事件
-            ch->handleEvent();
-        }
-        
-    }
     return 0;
 }
