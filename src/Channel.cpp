@@ -1,4 +1,5 @@
 #include"Channel.h"
+#include"Connection.h"
 
 /*
 class Channel//将channel的地址作为epoll携带的数据
@@ -104,11 +105,15 @@ void Channel::newConnection(Socket* serv_sock)//处理连接事件
     Socket *client_sock = new Socket(serv_sock->accept(client_addr));
 
     printf("客户端(fd:%d, ip:%s, port:%d)连接\n", client_sock->fd(), client_addr.ip(), client_addr.port());
+    Connection *conn = new Connection(loop_, client_sock);//暂时添加到这里
+    //！这里的对象暂时没有释放
 
+    /*
     Channel* client_channel = new Channel(loop_, client_sock->fd());
     client_channel->setCallback(std::bind(&Channel::onMessage, client_channel));
     client_channel->useET();
     client_channel->enableReading();
+    */
 }
 
 void Channel::onMessage()//处理对端发来的消息
