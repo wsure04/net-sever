@@ -12,6 +12,7 @@ class TcpSever
 TcpServer::TcpServer(const std::string &ip, uint16_t port)
 {
     acceptor_ = new Acceptor(&loop_, ip, port);
+    acceptor_->set_newconnectioncb(std::bind(&TcpServer::newConnection, this, std::placeholders::_1));
 }
 TcpServer::~TcpServer()
 {
@@ -22,3 +23,8 @@ void TcpServer::start()
 {
     loop_.run();
 } //运行事件循环
+
+void TcpServer::newConnection(Socket *client_sock)
+{
+    Connection *conn = new Connection(&loop_, client_sock);//暂时未释放
+}

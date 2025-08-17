@@ -34,7 +34,6 @@ class Channel//将channel的地址作为epoll携带的数据
 
         void handleEvent();//事件处理函数 epoll_wait()返回的时候，执行它
 
-        void newConnection(Socket* serv_cock);//处理连接事件
         void onMessage();//处理对端发来的消息
 
         void setCallback(std::function<void()> fn);//设置回调函数

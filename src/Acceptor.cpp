@@ -1,5 +1,5 @@
 #include"Acceptor.h"
-
+#include"Connection.h"
 /*
 class Acceptor
 {
@@ -32,7 +32,7 @@ Acceptor::Acceptor(EventLoop *loop, const std::string &ip, uint16_t port):loop_(
     //创建epoll句柄
 
     acceptchannel_ = new Channel(loop_, servsock_->fd());
-    acceptchannel_->setCallback(std::bind(&Channel::newConnection, acceptchannel_, servsock_));
+    acceptchannel_->setCallback(std::bind(&Acceptor::newConnection, this));
     acceptchannel_->enableReading();
 }
 Acceptor::~Acceptor()
@@ -42,3 +42,18 @@ Acceptor::~Acceptor()
     delete acceptchannel_;
 }
 
+void Acceptor::newConnection()//处理连接事件
+{
+    InetAddress client_addr;
+            //接收客户端socket
+    Socket *client_sock = new Socket(servsock_->accept(client_addr));
+
+    printf("客户端(fd:%d, ip:%s, port:%d)连接\n", client_sock->fd(), client_addr.ip(), client_addr.port());
+    //Connection *conn = new Connection(loop_, client_sock);//暂时添加到这里
+    newconnectioncb_(client_sock);
+}
+
+void Acceptor::set_newconnectioncb(std::function<void(Socket*)> fn)
+{
+    newconnectioncb_ = fn;
+}
