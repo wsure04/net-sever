@@ -80,8 +80,7 @@ void Channel::handleEvent()//事件处理函数
      //处理读写事件
     if(revents_ & EPOLLRDHUP)
     {
-        printf("客户端(%d)已关闭\n", fd_);
-        close(fd_);//关闭客户端
+        closecallback_();
     }
     else if(revents_ & EPOLLIN|EPOLLPRI)
     {
@@ -93,8 +92,7 @@ void Channel::handleEvent()//事件处理函数
     }
     else//其他是为错误
     {
-        printf("client(%d) error\n", fd_);
-        close(fd_);
+        errorcallback_();
     }
 }//事件处理函数 epoll_wait()返回的时候，执行它
 
@@ -109,8 +107,7 @@ void Channel::onMessage()//处理对端发来的消息
         readn = recv(fd_, buf, sizeof(buf), 0);
         if(readn == 0)
         {    
-            printf("客户端(%d)已关闭\n", fd_);
-            close(fd_);//关闭客户端
+            closecallback_();
         }
         else if(readn == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))//数据读取完毕 非阻塞立即返回跳出
         {
@@ -128,7 +125,16 @@ void Channel::onMessage()//处理对端发来的消息
     }
 }
 
-void Channel::setCallback(std::function<void()> fn)//设置回调函数
+void Channel::setReadCallback(std::function<void()> fn)//设置回调函数
 {
     readcallback_ = fn;
+}
+
+void Channel::setCloseCallback(std::function<void()> fn)
+{
+    closecallback_ = fn;
+}
+void Channel::setErrorCallback(std::function<void()> fn)
+{
+    errorcallback_ = fn;   
 }

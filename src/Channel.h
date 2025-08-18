@@ -18,7 +18,9 @@ class Channel//将channel的地址作为epoll携带的数据
         uint32_t events_ = 0;//fd_需要监视的事件
         uint32_t revents_ = 0;//fd已经发生的事件
         //bool islisten_ = false;//如果是listenfd取值为true
-        std::function<void()> readcallback_;
+        std::function<void()> readcallback_;//fd_读事件的回调函数，如果是acceptchannel, 将回调newconnection
+        std::function<void()> closecallback_;//关闭fd_的回调函数， 将回调Connection::closecallback()
+        std::function<void()> errorcallback_;//fd_发生了错误的回调函数，将回调Connection::errorcallback()
     public:
         Channel(EventLoop *loop, int fd);
         ~Channel();
@@ -36,5 +38,7 @@ class Channel//将channel的地址作为epoll携带的数据
 
         void onMessage();//处理对端发来的消息
 
-        void setCallback(std::function<void()> fn);//设置回调函数
+        void setReadCallback(std::function<void()> fn);//设置回调函数
+        void setCloseCallback(std::function<void()> fn);
+        void setErrorCallback(std::function<void()> fn);
 };

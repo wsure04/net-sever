@@ -32,7 +32,7 @@ Acceptor::Acceptor(EventLoop *loop, const std::string &ip, uint16_t port):loop_(
     //创建epoll句柄
 
     acceptchannel_ = new Channel(loop_, servsock_->fd());
-    acceptchannel_->setCallback(std::bind(&Acceptor::newConnection, this));
+    acceptchannel_->setReadCallback(std::bind(&Acceptor::newConnection, this));
     acceptchannel_->enableReading();
 }
 Acceptor::~Acceptor()

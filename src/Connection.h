@@ -18,4 +18,7 @@ class Connection
         int fd() const;//返回fd成员
         std::string ip() const;
         uint16_t port() const;
+
+        void closeCallback();   //TCP连接关闭的回调函数， 供Channel回调
+        void errorCallback();   //TCP连接错误的回调函数，供Channel
 };
