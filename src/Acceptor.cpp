@@ -48,7 +48,7 @@ void Acceptor::newConnection()//处理连接事件
             //接收客户端socket
     Socket *client_sock = new Socket(servsock_->accept(client_addr));
 
-    printf("客户端(fd:%d, ip:%s, port:%d)连接\n", client_sock->fd(), client_addr.ip(), client_addr.port());
+    //printf("客户端(fd:%d, ip:%s, port:%d)连接\n", client_sock->fd(), client_addr.ip(), client_addr.port());
     //Connection *conn = new Connection(loop_, client_sock);//暂时添加到这里
     newconnectioncb_(client_sock);
 }

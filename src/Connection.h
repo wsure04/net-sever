@@ -14,4 +14,8 @@ class Connection
     public:
         Connection(EventLoop *loop, Socket *clientsock);
         ~Connection();
+
+        int fd() const;//返回fd成员
+        std::string ip() const;
+        uint16_t port() const;
 };

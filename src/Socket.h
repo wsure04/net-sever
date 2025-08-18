@@ -14,11 +14,17 @@ class Socket
 {
     private:
         const int fd_;//Socket持有的fd
+        std::string ip_;//如果是listenfd, 存放服务端监听的ip，如果是客户端连接的fd，存放对端的ip
+        uint16_t port_;
+
     public:
         Socket(int fd);
         ~Socket();
 
         int fd() const;//返回fd成员
+        std::string ip() const;
+        uint16_t port() const;
+        
         void setReuseAddr(bool on);//设置SO_REUSEADDR true-打开
         void setReusePort(bool on);//设置SO_REUSEPORT true-打开
         void setTcpNodelay(bool on);//设置TCP_NODELAY true-打开

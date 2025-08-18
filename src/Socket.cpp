@@ -73,6 +73,9 @@ int createNonblocking()//获得一个用于监听的套接字 并且设置为非
             close(fd_);
             exit(-1);
         }
+
+        ip_ = serv_addr.ip();
+        port_ = serv_addr.port();
     }
     void  Socket::listen(int n)//封装listen函数 包含错误检查
     {
@@ -92,5 +95,18 @@ int createNonblocking()//获得一个用于监听的套接字 并且设置为非
 
         client_addr.setAddr(peer_addr);
 
+        ip_ = client_addr.ip();
+        port_ = client_addr.port();
+
         return clientfd;
     }        
+
+std::string Socket::ip() const
+{
+    return ip_;
+}
+
+uint16_t Socket::port() const
+{
+    return port_;
+}

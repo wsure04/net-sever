@@ -17,6 +17,10 @@ TcpServer::TcpServer(const std::string &ip, uint16_t port)
 TcpServer::~TcpServer()
 {
     delete acceptor_;
+    for(auto &co : conns_)
+    {
+        delete co.second;
+    }
 }
 
 void TcpServer::start()
@@ -27,4 +31,7 @@ void TcpServer::start()
 void TcpServer::newConnection(Socket *client_sock)
 {
     Connection *conn = new Connection(&loop_, client_sock);//暂时未释放
+    printf("新的客户端(fd:%d, ip:%s, port:%d)连接\n", conn->fd(), conn->ip().c_str(), conn->port());
+
+    conns_[conn->fd()] = conn;
 }
