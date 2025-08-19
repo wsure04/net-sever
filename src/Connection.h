@@ -11,6 +11,8 @@ class Connection
         EventLoop *loop_; //事件循环 在构造函数中传入。
         Socket *clientsock_;
         Channel *clientchannel_;
+        std::function<void(Connection*)> closecallback_;
+        std::function<void(Connection*)> errorcallback_;
     public:
         Connection(EventLoop *loop, Socket *clientsock);
         ~Connection();
@@ -21,4 +23,8 @@ class Connection
 
         void closeCallback();   //TCP连接关闭的回调函数， 供Channel回调
         void errorCallback();   //TCP连接错误的回调函数，供Channel
+
+        void setCloseCallback(std::function<void(Connection*)> fn);
+
+        void setErrorCallback(std::function<void(Connection*)> fn);
 };

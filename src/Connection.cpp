@@ -42,12 +42,20 @@ uint16_t Connection::port() const
 
 void Connection::closeCallback()
 {
-    printf("客户端(%d)已关闭\n", fd());
-    close(fd());//关闭客户端
+   closecallback_(this);
 }//TCP连接关闭的回调函数， 供Channel回调
 
 void Connection::errorCallback()
 {
-    printf("client(%d) error\n", fd());
-    close(fd());
+    errorcallback_(this);
 }  //TCP连接错误的回调函数，供Channel
+
+void Connection::setCloseCallback(std::function<void(Connection*)> fn)
+{
+    closecallback_ = fn;
+}
+
+void Connection::setErrorCallback(std::function<void(Connection*)> fn)
+{
+    errorcallback_ = fn;
+}

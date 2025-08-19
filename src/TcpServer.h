@@ -18,4 +18,8 @@ class TcpServer
         void start(); //运行事件循环
 
         void newConnection(Socket *client_sock);//处理连接事件
+
+        void closeConnection(Connection *conn);//关闭客户端连接 在Connection中回调此函数
+
+        void errorConnection(Connection *conn);//关闭客户端连接 在Connection中回调此函数
 };

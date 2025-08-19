@@ -1,7 +1,7 @@
 #include"TcpServer.h"
 /*
 class TcpSever
-{
+
     private:
         EventLoop loop_; //一个tcpsever可以有多个事件循环 现在是单线程 暂时只用一个
     public:
@@ -31,7 +31,25 @@ void TcpServer::start()
 void TcpServer::newConnection(Socket *client_sock)
 {
     Connection *conn = new Connection(&loop_, client_sock);//暂时未释放
+    conn->setCloseCallback(std::bind(&TcpServer::closeConnection, this, std::placeholders::_1));   
+    conn->setErrorCallback(std::bind(&TcpServer::errorConnection, this, std::placeholders::_1));   
     printf("新的客户端(fd:%d, ip:%s, port:%d)连接\n", conn->fd(), conn->ip().c_str(), conn->port());
 
     conns_[conn->fd()] = conn;
 }
+
+
+void TcpServer::closeConnection(Connection *conn)
+{
+    printf("客户端(%d)已关闭\n", conn->fd());
+    //close(conn->fd());//关闭客户端
+    conns_.erase(conn->fd()); //从map中删除conn
+    delete conn;
+}//关闭客户端连接 在Connection中回调此函数
+
+void TcpServer::errorConnection(Connection *conn)
+{
+    printf("客户端(%d)错误\n", conn->fd());
+    conns_.erase(conn->fd()); //从map中删除conn
+    delete conn;
+} 
