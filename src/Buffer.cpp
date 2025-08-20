@@ -40,3 +40,8 @@ void Buffer::clear()//清空buf_
 {
     buf_.clear();
 }
+
+void Buffer::erase(size_t pos, size_t n)
+{
+    buf_.erase(pos, n);
+}

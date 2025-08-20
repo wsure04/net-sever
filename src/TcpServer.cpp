@@ -33,6 +33,7 @@ void TcpServer::newConnection(Socket *client_sock)
     Connection *conn = new Connection(&loop_, client_sock);//暂时未释放
     conn->setCloseCallback(std::bind(&TcpServer::closeConnection, this, std::placeholders::_1));   
     conn->setErrorCallback(std::bind(&TcpServer::errorConnection, this, std::placeholders::_1));   
+    conn->setOnmessageCallback(std::bind(&TcpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
     printf("新的客户端(fd:%d, ip:%s, port:%d)连接\n", conn->fd(), conn->ip().c_str(), conn->port());
 
     conns_[conn->fd()] = conn;
@@ -53,3 +54,14 @@ void TcpServer::errorConnection(Connection *conn)
     conns_.erase(conn->fd()); //从map中删除conn
     delete conn;
 } 
+
+void TcpServer::onMessage(Connection* conn, std::string message)
+{
+    message = "reply:" + message;
+
+    int len = message.size();
+    std::string tmpbuf((char*)&len, 4);
+    tmpbuf.append(message);
+
+    send(conn->fd(), tmpbuf.data(), len + 4, 0);
+} //处理客户端的请求报文， 在Connection中回调此函数

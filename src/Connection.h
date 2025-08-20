@@ -17,6 +17,7 @@ class Connection
 
         std::function<void(Connection*)> closecallback_;
         std::function<void(Connection*)> errorcallback_;
+        std::function<void(Connection*, std::string)> onmessagecallback_;
     public:
         Connection(EventLoop *loop, Socket *clientsock);
         ~Connection();
@@ -31,6 +32,9 @@ class Connection
         void setCloseCallback(std::function<void(Connection*)> fn);
 
         void setErrorCallback(std::function<void(Connection*)> fn);
+
+        void setOnmessageCallback(std::function<void(Connection*, std::string)> fn);
+       
 
         void onMessage();//处理对端发来的消息
 };
