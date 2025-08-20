@@ -73,9 +73,7 @@ int createNonblocking()//获得一个用于监听的套接字 并且设置为非
             close(fd_);
             exit(-1);
         }
-
-        ip_ = serv_addr.ip();
-        port_ = serv_addr.port();
+        setIpPort(serv_addr.ip(), serv_addr.port());
     }
     void  Socket::listen(int n)//封装listen函数 包含错误检查
     {
@@ -94,10 +92,7 @@ int createNonblocking()//获得一个用于监听的套接字 并且设置为非
         int clientfd = accept4(fd_, (sockaddr*)&peer_addr, &client_len, SOCK_NONBLOCK);//自动设置非阻塞
 
         client_addr.setAddr(peer_addr);
-
-        ip_ = client_addr.ip();
-        port_ = client_addr.port();
-
+    
         return clientfd;
     }        
 
@@ -109,4 +104,10 @@ std::string Socket::ip() const
 uint16_t Socket::port() const
 {
     return port_;
+}
+
+void Socket::setIpPort(const std::string &ip, uint16_t port)
+{
+    ip_ = ip;
+    port_ = port;
 }

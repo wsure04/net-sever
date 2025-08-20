@@ -32,5 +32,7 @@ class Socket
 
         void bind(const InetAddress& serv_addr);
         void listen(int n = 128);
-        int accept(InetAddress& client_addr);        
+        int accept(InetAddress& client_addr);    
+        
+        void setIpPort(const std::string &ip, uint16_t port);
 };

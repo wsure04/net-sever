@@ -14,7 +14,7 @@ class Connection
 Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clientsock_(clientsock)
 {
     clientchannel_ = new Channel(loop_, clientsock_->fd());
-    clientchannel_->setReadCallback(std::bind(&Channel::onMessage, clientchannel_));
+    clientchannel_->setReadCallback(std::bind(&Connection::onMessage, this));
     clientchannel_->setCloseCallback(std::bind(&Connection::closeCallback, this));
     clientchannel_->setErrorCallback(std::bind(&Connection::errorCallback, this));
     clientchannel_->useET();
@@ -58,4 +58,43 @@ void Connection::setCloseCallback(std::function<void(Connection*)> fn)
 void Connection::setErrorCallback(std::function<void(Connection*)> fn)
 {
     errorcallback_ = fn;
+}
+
+void Connection::onMessage()//处理对端发来的消息
+{
+    char buf[BUFSIZ];
+    //注意 使用的是非阻塞io
+    while(true)
+    {
+        bzero(buf, sizeof(buf));
+        ssize_t readn = recv(fd(), buf, sizeof(buf), 0);
+        
+        if(readn > 0)//读取到了数据
+        {
+            //printf("接收到数据(来自:%d)：%s\n", fd(), buf);
+            //send(fd(), buf, strlen(buf), 0);
+            //接收到数据之后，先不发送 现放到接收缓冲区
+            inputbuffer_.append(buf, readn); //把读取的数据追加到接收缓冲区中
+        }
+        else if(readn == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))//数据读取完毕 非阻塞立即返回跳出
+        {
+            //接收完成
+            printf("接收到数据(来自:%d)：%s\n", fd(), inputbuffer_.data());
+            //在这里进行计算
+            outputbuffer_ = inputbuffer_;
+            //将运算后的结果存放到发送缓冲区中
+            inputbuffer_.clear();//接收缓冲区中的数据处理完了 清空
+            send(fd(), outputbuffer_.data(),outputbuffer_.size(), 0);
+            break;
+        }
+        else if(readn == -1 && errno == EINTR) //数据读取时被信号中断 继续读取
+        {
+            continue;
+        }
+        else if(readn == 0)
+        {    
+            closeCallback();
+            break;
+        }
+    }
 }

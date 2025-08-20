@@ -36,7 +36,7 @@ class Channel//将channel的地址作为epoll携带的数据
 
         void handleEvent();//事件处理函数 epoll_wait()返回的时候，执行它
 
-        void onMessage();//处理对端发来的消息
+        //void onMessage();//处理对端发来的消息
 
         void setReadCallback(std::function<void()> fn);//设置回调函数
         void setCloseCallback(std::function<void()> fn);

@@ -4,13 +4,17 @@
 #include"InetAddress.h"
 #include"Channel.h"
 #include"EventLoop.h"
-
+#include"Buffer.h"
 class Connection
 {
     private:
         EventLoop *loop_; //事件循环 在构造函数中传入。
         Socket *clientsock_;
         Channel *clientchannel_;
+
+        Buffer inputbuffer_; //接收缓冲区
+        Buffer outputbuffer_; //发送缓冲区
+
         std::function<void(Connection*)> closecallback_;
         std::function<void(Connection*)> errorcallback_;
     public:
@@ -27,4 +31,6 @@ class Connection
         void setCloseCallback(std::function<void(Connection*)> fn);
 
         void setErrorCallback(std::function<void(Connection*)> fn);
+
+        void onMessage();//处理对端发来的消息
 };

@@ -95,7 +95,7 @@ void Channel::handleEvent()//事件处理函数
         errorcallback_();
     }
 }//事件处理函数 epoll_wait()返回的时候，执行它
-
+/*
 void Channel::onMessage()//处理对端发来的消息
 {
     char buf[BUFSIZ];
@@ -124,7 +124,7 @@ void Channel::onMessage()//处理对端发来的消息
         }
     }
 }
-
+*/
 void Channel::setReadCallback(std::function<void()> fn)//设置回调函数
 {
     readcallback_ = fn;
