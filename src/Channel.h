@@ -21,6 +21,7 @@ class Channel//将channel的地址作为epoll携带的数据
         std::function<void()> readcallback_;//fd_读事件的回调函数，如果是acceptchannel, 将回调newconnection
         std::function<void()> closecallback_;//关闭fd_的回调函数， 将回调Connection::closecallback()
         std::function<void()> errorcallback_;//fd_发生了错误的回调函数，将回调Connection::errorcallback()
+        std::function<void()> writecallback_;
     public:
         Channel(EventLoop *loop, int fd);
         ~Channel();
@@ -28,6 +29,9 @@ class Channel//将channel的地址作为epoll携带的数据
         int fd();
         void useET();//设置采用边缘触发
         void enableReading(); //让epoll_wait监听fd_的读事件
+        void disableReading(); //取消读事件
+        void enableWriting(); //让epoll_wait监听fd_的写事件
+        void disableWriting(); //取消写事件
         void setInepoll(); //设置inepoll未true
         void setRevents(uint32_t ev);//设置revents成员函数
         bool inpoll();
@@ -41,4 +45,5 @@ class Channel//将channel的地址作为epoll携带的数据
         void setReadCallback(std::function<void()> fn);//设置回调函数
         void setCloseCallback(std::function<void()> fn);
         void setErrorCallback(std::function<void()> fn);
+        void setWriteCallback(std::function<void()> fn);
 };

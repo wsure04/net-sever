@@ -17,6 +17,7 @@ Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clients
     clientchannel_->setReadCallback(std::bind(&Connection::onMessage, this));
     clientchannel_->setCloseCallback(std::bind(&Connection::closeCallback, this));
     clientchannel_->setErrorCallback(std::bind(&Connection::errorCallback, this));
+    clientchannel_->setWriteCallback(std::bind(&Connection::writeCallback, this));
     clientchannel_->useET();
     clientchannel_->enableReading();
 }
@@ -101,14 +102,14 @@ void Connection::onMessage()//处理对端发来的消息
 
                 printf("收到(fd:%d)的报文:%s\n", fd(), message.c_str());
 
-                //假设经过了一些计算
+                //假设经过了一些计算 计算不应该在底层类
                onmessagecallback_(this, message); //调用TcpServer::onMessage()
             }
             
             outputbuffer_ = inputbuffer_;
             //将运算后的结果存放到发送缓冲区中
             inputbuffer_.clear();//接收缓冲区中的数据处理完了 清空
-            send(fd(), outputbuffer_.data(),outputbuffer_.size(), 0);
+            ::send(fd(), outputbuffer_.data(),outputbuffer_.size(), 0);
             break;
         }
         else if(readn == -1 && errno == EINTR) //数据读取时被信号中断 继续读取
@@ -122,3 +123,21 @@ void Connection::onMessage()//处理对端发来的消息
         }
     }
 }
+
+
+void Connection::send(const char* data, size_t size)
+{
+    outputbuffer_.append(data, size);
+    clientchannel_->enableWriting();//注册写事件
+
+}
+
+
+void Connection::writeCallback()
+{
+    int writen = ::send(fd(), outputbuffer_.data(), outputbuffer_.size(), 0);//尝试把发送缓冲区中的数据全部发送出去
+    if(writen > 0) outputbuffer_.erase(0, writen); //从发送缓冲区中删除已经发送的数据
+
+    //缓冲区中没有数据 发送完成 不再关注写事件 防止忙轮询
+    if(outputbuffer_.size() == 0) clientchannel_->disableWriting();
+} //处理写事件的回调函数 供channel回调

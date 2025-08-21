@@ -49,6 +49,22 @@ void Channel::enableReading()//让epoll_wait监听fd_的读事件
     loop_->updateChannel(this);
 }
 
+void Channel::disableReading()
+{
+    events_ &= ~EPOLLIN;
+    loop_->updateChannel(this);
+} //取消读事件
+void Channel::enableWriting()
+{
+    events_ |= EPOLLOUT;
+    loop_->updateChannel(this);
+} //让epoll_wait监听fd_的写事件
+void Channel::disableWriting()
+{
+    events_ &= ~EPOLLOUT;
+    loop_->updateChannel(this);
+}//取消写事件
+
 void Channel::setInepoll() //设置inepoll未true
 {
     inepoll_ = true;
@@ -88,43 +104,14 @@ void Channel::handleEvent()//事件处理函数
     }
     else if(revents_ & EPOLLOUT)
     {
-
+        writecallback_();
     }
     else//其他是为错误
     {
         errorcallback_();
     }
 }//事件处理函数 epoll_wait()返回的时候，执行它
-/*
-void Channel::onMessage()//处理对端发来的消息
-{
-    char buf[BUFSIZ];
-    //注意 使用的是非阻塞io
-    int readn = 0;
-    while(true)
-    {
-        bzero(buf, sizeof(buf));
-        readn = recv(fd_, buf, sizeof(buf), 0);
-        if(readn == 0)
-        {    
-            closecallback_();
-        }
-        else if(readn == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))//数据读取完毕 非阻塞立即返回跳出
-        {
-            break;
-        }
-        else if(readn == -1 && errno == EINTR) //数据读取时被信号中断 继续读取
-        {
-            continue;
-        }
-        else if(readn > 0)//读取到了数据
-        {
-            printf("接收到数据(来自:%d)：%s\n", fd_, buf);
-            send(fd_, buf, strlen(buf), 0);
-        }
-    }
-}
-*/
+
 void Channel::setReadCallback(std::function<void()> fn)//设置回调函数
 {
     readcallback_ = fn;
@@ -137,4 +124,10 @@ void Channel::setCloseCallback(std::function<void()> fn)
 void Channel::setErrorCallback(std::function<void()> fn)
 {
     errorcallback_ = fn;   
+}
+
+
+void Channel::setWriteCallback(std::function<void()> fn)
+{
+    writecallback_ = fn;
 }

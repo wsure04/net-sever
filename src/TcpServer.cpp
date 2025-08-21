@@ -63,5 +63,6 @@ void TcpServer::onMessage(Connection* conn, std::string message)
     std::string tmpbuf((char*)&len, 4);
     tmpbuf.append(message);
 
-    send(conn->fd(), tmpbuf.data(), len + 4, 0);
+    //send(conn->fd(), tmpbuf.data(), len + 4, 0);
+    conn->send(tmpbuf.data(), tmpbuf.size());
 } //处理客户端的请求报文， 在Connection中回调此函数
