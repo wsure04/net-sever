@@ -36,15 +36,19 @@ void TcpServer::newConnection(Socket *client_sock)
     conn->setErrorCallback(std::bind(&TcpServer::errorConnection, this, std::placeholders::_1));   
     conn->setOnmessageCallback(std::bind(&TcpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
     conn->setSendCompleteCallback(std::bind(&TcpServer::sendComplete, this, std::placeholders::_1));
-    printf("新的客户端(fd:%d,ip:%s,port:%d)连接\n", conn->fd(), conn->ip().c_str(), conn->port());
+    //printf("新的客户端(fd:%d,ip:%s,port:%d)连接\n", conn->fd(), conn->ip().c_str(), conn->port());
 
     conns_[conn->fd()] = conn;
+
+    if(newconnectioncb_) newconnectioncb_(conn);//回调EchoServer::handleNewConnection
 }
 
 
 void TcpServer::closeConnection(Connection *conn)
 {
-    printf("客户端(%d)已关闭\n", conn->fd());
+    if(closeconnectioncb_) closeconnectioncb_(conn);
+
+    //printf("客户端(%d)已关闭\n", conn->fd());
     //close(conn->fd());//关闭客户端
     conns_.erase(conn->fd()); //从map中删除conn
     delete conn;
@@ -52,34 +56,53 @@ void TcpServer::closeConnection(Connection *conn)
 
 void TcpServer::errorConnection(Connection *conn)
 {
-    printf("客户端(%d)错误\n", conn->fd());
+    if(errorconnectioncb_) errorconnectioncb_(conn);
+
+    //printf("客户端(%d)错误\n", conn->fd());
     conns_.erase(conn->fd()); //从map中删除conn
     delete conn;
 } 
 
 void TcpServer::onMessage(Connection* conn, std::string message)
 {
-    message = "reply:" + message;
-
-    int len = message.size();
-    std::string tmpbuf((char*)&len, 4);
-    tmpbuf.append(message);
-
-    //send(conn->fd(), tmpbuf.data(), len + 4, 0);
-    conn->send(tmpbuf.c_str(), tmpbuf.size());
+    if(onmessagecb_) onmessagecb_(conn, message);
 } //处理客户端的请求报文， 在Connection中回调此函数
 
 
 void TcpServer::sendComplete(Connection *conn)
 {
-    printf("send cmoplete.\n");
+   //printf("send cmoplete.\n");
 
-    //通知TCP发送完成 
+    if(sendcompletecb_) sendcompletecb_(conn);
 }
 //epoll_wait超时 在EventLoop中回调
 void TcpServer::epollTimeout(EventLoop *loop)
 {
-    printf("epoll_wait() timeout.\n");
+    //printf("epoll_wait() timeout.\n");
 
-    //可以增加其他代码
+    if(timeoutcb_) timeoutcb_(loop);
+}
+void TcpServer::setNewConnectioncb(std::function<void(Connection*)> fn)
+{
+    newconnectioncb_ = fn;
+}
+void TcpServer::setCloseConnectioncb(std::function<void(Connection*)> fn)
+{
+    closeconnectioncb_ = fn;
+}
+void TcpServer::setErrorConnectioncb(std::function<void(Connection*)> fn)
+{
+    errorconnectioncb_ = fn;
+}
+void TcpServer::setOnMessagecb(std::function<void(Connection*, std::string &message)> fn)
+{
+    onmessagecb_ = fn;
+}
+void TcpServer::setSendCompletecb(std::function<void(Connection*)> fn)
+{
+    sendcompletecb_ = fn;
+}
+void TcpServer::setTimeout(std::function<void(EventLoop*)> fn)
+{
+    timeoutcb_ = fn;
 }
