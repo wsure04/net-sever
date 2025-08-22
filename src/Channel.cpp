@@ -45,7 +45,6 @@ void Channel::useET()//设置采用边缘触发
 void Channel::enableReading()//让epoll_wait监听fd_的读事件
 {
     events_= events_ | EPOLLIN;
-    //loop_->ep()->updateChannel(this);//将自己挂到树上   
     loop_->updateChannel(this);
 }
 
@@ -98,7 +97,7 @@ void Channel::handleEvent()//事件处理函数
     {
         closecallback_();
     }
-    else if(revents_ & EPOLLIN|EPOLLPRI)
+    else if(revents_ & (EPOLLIN|EPOLLPRI))
     {
         readcallback_();
     }

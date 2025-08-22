@@ -80,7 +80,6 @@ std::vector<Channel*> Epoll::loop(int timeout)//将有时间的fd 封装为chann
 
     if(infd == 0)//超时 轮询等待连接
     {
-        printf("epoll_wait timeout\n");
         return channels;//返回空的数组对象
     }
 

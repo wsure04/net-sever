@@ -87,7 +87,7 @@ int createNonblocking()//获得一个用于监听的套接字 并且设置为非
     int  Socket::accept(InetAddress& client_addr)//client_addr为传出参数 
     {
         sockaddr_in peer_addr;
-        bzero(&peer_addr, sizeof(peer_addr));
+        //bzero(&peer_addr, sizeof(peer_addr));
         socklen_t client_len = sizeof(peer_addr);
         int clientfd = accept4(fd_, (sockaddr*)&peer_addr, &client_len, SOCK_NONBLOCK);//自动设置非阻塞
 

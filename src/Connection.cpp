@@ -24,7 +24,6 @@ Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clients
 Connection::~Connection()
 {
     delete clientchannel_;
-    //Channel类中创建了clientsock之后并没有释放内存，但是Connection知道释放时机
     delete clientsock_;
 }
 
@@ -51,6 +50,19 @@ void Connection::errorCallback()
     errorcallback_(this);
 }  //TCP连接错误的回调函数，供Channel
 
+void Connection::writeCallback()
+{
+    int writen = ::send(fd(), outputbuffer_.data(), outputbuffer_.size(), 0);//尝试把发送缓冲区中的数据全部发送出去
+    if(writen > 0) outputbuffer_.erase(0, writen); //从发送缓冲区中删除已经发送的数据
+
+    //缓冲区中没有数据 发送完成 不再关注写事件 防止忙轮询
+    if(outputbuffer_.size() == 0)
+    {
+        clientchannel_->disableWriting();
+        sendcompletecallback_(this);//发送完成通知TcpServer层
+    }
+} //处理写事件的回调函数 供channel回调
+
 void Connection::setCloseCallback(std::function<void(Connection*)> fn)
 {
     closecallback_ = fn;
@@ -66,13 +78,18 @@ void Connection::setErrorCallback(std::function<void(Connection*)> fn)
     onmessagecallback_ = fn;
 }
 
+void Connection::setSendCompleteCallback(std::function<void(Connection*)> fn)
+{
+    sendcompletecallback_ = fn;
+}
+
 void Connection::onMessage()//处理对端发来的消息
 {
     char buf[BUFSIZ];
     //注意 使用的是非阻塞io
     while(true)
     {
-        bzero(buf, sizeof(buf));
+        bzero(&buf, sizeof(buf));
         ssize_t readn = recv(fd(), buf, sizeof(buf), 0);
         
         if(readn > 0)//读取到了数据
@@ -81,6 +98,10 @@ void Connection::onMessage()//处理对端发来的消息
             //send(fd(), buf, strlen(buf), 0);
             //接收到数据之后，先不发送 现放到接收缓冲区
             inputbuffer_.append(buf, readn); //把读取的数据追加到接收缓冲区中
+        }
+        else if(readn == -1 && errno == EINTR) //数据读取时被信号中断 继续读取
+        {
+            continue;
         }
         else if(readn == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))//数据读取完毕 非阻塞立即返回跳出
         {
@@ -105,16 +126,7 @@ void Connection::onMessage()//处理对端发来的消息
                 //假设经过了一些计算 计算不应该在底层类
                onmessagecallback_(this, message); //调用TcpServer::onMessage()
             }
-            
-            outputbuffer_ = inputbuffer_;
-            //将运算后的结果存放到发送缓冲区中
-            inputbuffer_.clear();//接收缓冲区中的数据处理完了 清空
-            ::send(fd(), outputbuffer_.data(),outputbuffer_.size(), 0);
             break;
-        }
-        else if(readn == -1 && errno == EINTR) //数据读取时被信号中断 继续读取
-        {
-            continue;
         }
         else if(readn == 0)
         {    
@@ -129,15 +141,8 @@ void Connection::send(const char* data, size_t size)
 {
     outputbuffer_.append(data, size);
     clientchannel_->enableWriting();//注册写事件
-
 }
 
 
-void Connection::writeCallback()
-{
-    int writen = ::send(fd(), outputbuffer_.data(), outputbuffer_.size(), 0);//尝试把发送缓冲区中的数据全部发送出去
-    if(writen > 0) outputbuffer_.erase(0, writen); //从发送缓冲区中删除已经发送的数据
 
-    //缓冲区中没有数据 发送完成 不再关注写事件 防止忙轮询
-    if(outputbuffer_.size() == 0) clientchannel_->disableWriting();
-} //处理写事件的回调函数 供channel回调
+

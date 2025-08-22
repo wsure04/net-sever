@@ -24,12 +24,20 @@ void EventLoop::run()
 {
     while(true)
     {
-        std::vector<Channel*> channels = ep_->loop();//等待事件
+        std::vector<Channel*> channels = ep_->loop(10*1000);//等待事件
         
-        for(auto &ch : channels)
+        //如果channels为空，表示超时，回调TcpServer::epolltimeout()
+        if(channels.size() == 0)
         {
-            //处理读写事件
-            ch->handleEvent();
+            epolltimeoutcallback_(this);
+        }
+        else
+        {
+            for(auto &ch : channels)
+            {
+                //处理读写事件
+                ch->handleEvent();
+            }
         }
     }
     
@@ -39,4 +47,9 @@ void EventLoop::run()
 void EventLoop::updateChannel(Channel* ch)//将Channel添加或更新到红黑树上 Channel中也有fd 对应addfd
 {
     ep_->updateChannel(ch);
+}
+
+void EventLoop::setEpollwaitTimeout(std::function<void(EventLoop*)> fn)
+{
+    epolltimeoutcallback_ = fn;
 }

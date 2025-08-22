@@ -13,6 +13,7 @@ TcpServer::TcpServer(const std::string &ip, uint16_t port)
 {
     acceptor_ = new Acceptor(&loop_, ip, port);
     acceptor_->set_newconnectioncb(std::bind(&TcpServer::newConnection, this, std::placeholders::_1));
+    loop_.setEpollwaitTimeout(std::bind(&TcpServer::epollTimeout, this, std::placeholders::_1));
 }
 TcpServer::~TcpServer()
 {
@@ -30,11 +31,12 @@ void TcpServer::start()
 
 void TcpServer::newConnection(Socket *client_sock)
 {
-    Connection *conn = new Connection(&loop_, client_sock);//暂时未释放
+    Connection *conn = new Connection(&loop_, client_sock);
     conn->setCloseCallback(std::bind(&TcpServer::closeConnection, this, std::placeholders::_1));   
     conn->setErrorCallback(std::bind(&TcpServer::errorConnection, this, std::placeholders::_1));   
     conn->setOnmessageCallback(std::bind(&TcpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
-    printf("新的客户端(fd:%d, ip:%s, port:%d)连接\n", conn->fd(), conn->ip().c_str(), conn->port());
+    conn->setSendCompleteCallback(std::bind(&TcpServer::sendComplete, this, std::placeholders::_1));
+    printf("新的客户端(fd:%d,ip:%s,port:%d)连接\n", conn->fd(), conn->ip().c_str(), conn->port());
 
     conns_[conn->fd()] = conn;
 }
@@ -64,5 +66,20 @@ void TcpServer::onMessage(Connection* conn, std::string message)
     tmpbuf.append(message);
 
     //send(conn->fd(), tmpbuf.data(), len + 4, 0);
-    conn->send(tmpbuf.data(), tmpbuf.size());
+    conn->send(tmpbuf.c_str(), tmpbuf.size());
 } //处理客户端的请求报文， 在Connection中回调此函数
+
+
+void TcpServer::sendComplete(Connection *conn)
+{
+    printf("send cmoplete.\n");
+
+    //通知TCP发送完成 
+}
+//epoll_wait超时 在EventLoop中回调
+void TcpServer::epollTimeout(EventLoop *loop)
+{
+    printf("epoll_wait() timeout.\n");
+
+    //可以增加其他代码
+}
