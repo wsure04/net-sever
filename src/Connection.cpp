@@ -73,7 +73,7 @@ void Connection::setErrorCallback(std::function<void(Connection*)> fn)
     errorcallback_ = fn;
 }
 
- void Connection::setOnmessageCallback(std::function<void(Connection*, std::string)> fn)
+ void Connection::setOnmessageCallback(std::function<void(Connection*, std::string&)> fn)
 {
     onmessagecallback_ = fn;
 }
@@ -139,7 +139,7 @@ void Connection::onMessage()//处理对端发来的消息
 
 void Connection::send(const char* data, size_t size)
 {
-    outputbuffer_.append(data, size);
+    outputbuffer_.appendWithHead(data, size);
     clientchannel_->enableWriting();//注册写事件
 }
 

@@ -63,7 +63,7 @@ void TcpServer::errorConnection(Connection *conn)
     delete conn;
 } 
 
-void TcpServer::onMessage(Connection* conn, std::string message)
+void TcpServer::onMessage(Connection* conn, std::string &message)
 {
     if(onmessagecb_) onmessagecb_(conn, message);
 } //处理客户端的请求报文， 在Connection中回调此函数

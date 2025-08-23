@@ -26,7 +26,7 @@ class TcpServer
         void newConnection(Socket *client_sock);//处理连接事件
         void closeConnection(Connection *conn);//关闭客户端连接 在Connection中回调此函数
         void errorConnection(Connection *conn);//关闭客户端连接 在Connection中回调此函数
-        void onMessage(Connection* conn, std::string message); //处理客户端的请求报文， 在Connection中回调此函数
+        void onMessage(Connection* conn, std::string& message); //处理客户端的请求报文， 在Connection中回调此函数
         void sendComplete(Connection *conn);
         void epollTimeout(EventLoop *loop);
 

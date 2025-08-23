@@ -45,3 +45,10 @@ void Buffer::erase(size_t pos, size_t n)
 {
     buf_.erase(pos, n);
 }
+
+
+void Buffer::appendWithHead(const char*data, size_t size)
+{
+    buf_.append((char*)&size, 4);
+    buf_.append(data, size);
+}

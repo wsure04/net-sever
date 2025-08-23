@@ -53,16 +53,12 @@ void EchoServer::handleError(Connection *conn)//客户端连接错误
 {
     std::cout << "EchoServe Connection Error." << std::endl;
 }
-void EchoServer::handleMessage(Connection* conn, std::string message)//处理客户端的请求报文
+void EchoServer::handleMessage(Connection* conn, std::string &message)//处理客户端的请求报文
 {
      message = "reply-" + message;
 
-    int len = message.size();
-    std::string tmpbuf((char*)&len, 4);
-    tmpbuf.append(message);
-
     //send(conn->fd(), tmpbuf.data(), len + 4, 0);
-    conn->send(tmpbuf.c_str(), tmpbuf.size());
+    conn->send(message.data(), message.size());
 }
 void EchoServer::handleSendComplete(Connection *conn)//数据发送完成
 {

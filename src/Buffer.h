@@ -11,6 +11,7 @@ class Buffer
         ~Buffer();
 
         void append(const char* data, size_t size);//把数据追加到buf中
+        void appendWithHead(const char*data, size_t size);
         size_t size();//返回buf_的大小
         const char* data();//返回buf_首地址
         void clear();//清空buf_
