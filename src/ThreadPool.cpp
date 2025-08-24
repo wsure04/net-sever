@@ -23,12 +23,12 @@ class ThreadPool
 ThreadPool::ThreadPool(size_t threadnum):stop_(false)
 {
     //指定线程数量
-    for(size_t i; i < threadnum; i++)
+    for(size_t i = 0; i < threadnum; i++)
     {
         threads_.emplace_back([this]()
         {
             printf("create threads(%d)\n", syscall(SYS_gettid));//显示线程id
-            while(stop_ = false)
+            while(stop_ == false)
             {
                 std::function<void()> task;;//用于存放出队的元素
 

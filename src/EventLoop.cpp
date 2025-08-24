@@ -22,6 +22,7 @@ EventLoop::~EventLoop()
 
 void EventLoop::run()
 {
+    //printf("EventLoop::run() thread is %d.\n", syscall(SYS_gettid));
     while(true)
     {
         std::vector<Channel*> channels = ep_->loop(10*1000);//等待事件

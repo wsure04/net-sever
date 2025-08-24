@@ -1,6 +1,8 @@
 #pragma once
 #include"Epoll.h"
 #include<functional>
+#include<sys/syscall.h>
+#include<unistd.h>
 class Channel;
 class Epoll;
 //事件循环类

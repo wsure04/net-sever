@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
      }
      printf("已连接服务器\n");
      char buf[BUFSIZ];
-     for(int i = 0;i < 2; i++)
+     for(int i = 0;i < 1; i++)
      {
         bzero(buf, sizeof(buf));
 
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         memcpy(tmpbuf+4, buf, len);
         send(sockfd, tmpbuf, len+4, 0);
      }
-     for(int i = 0;i < 2; i++)
+     for(int i = 0;i < 1; i++)
      {
           int len;
           recv(sockfd, &len, 4, 0);
@@ -66,5 +66,5 @@ int main(int argc, char *argv[])
           printf("接收到数据：%s\n", buf);
 
      }
-
+     sleep(100);
 }

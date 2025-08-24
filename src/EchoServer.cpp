@@ -21,7 +21,7 @@ class EchoServer
         //事件处理函数将在TcpServer类中回调
 };
 */
-EchoServer::EchoServer(const std::string &ip, uint16_t port):tcpserver_(ip, port)
+EchoServer::EchoServer(const std::string &ip, uint16_t port, int threadnum):tcpserver_(ip, port, threadnum)
 {
     tcpserver_.setNewConnectioncb(std::bind(&EchoServer::handleNewConnection, this, std::placeholders::_1));
     tcpserver_.setCloseConnectioncb(std::bind(&EchoServer::handleClose, this, std::placeholders::_1));
@@ -43,6 +43,7 @@ void EchoServer::Start()
 void EchoServer::handleNewConnection(Connection* conn)//处理新客户端连接请求
 {
     std::cout << "New Connection Come in." << std::endl;
+    printf("EchoServe::handleNewConnection() thread is %d.\n", syscall(SYS_gettid));
     //可以增加业务代码
 }
 void EchoServer::handleClose(Connection *conn)//关闭客户端连接 
@@ -55,6 +56,7 @@ void EchoServer::handleError(Connection *conn)//客户端连接错误
 }
 void EchoServer::handleMessage(Connection* conn, std::string &message)//处理客户端的请求报文
 {
+    printf("EchoServer::handleMessage() thread is %d.\n", syscall(SYS_gettid));
      message = "reply-" + message;
 
     //send(conn->fd(), tmpbuf.data(), len + 4, 0);
