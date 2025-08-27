@@ -20,14 +20,14 @@ class ThreadPool
 };
 */
  //在构造函数中将启动threadnum个线程
-ThreadPool::ThreadPool(size_t threadnum):stop_(false)
+ThreadPool::ThreadPool(size_t threadnum, const std::string& threadtype):stop_(false), threadtype_(threadtype)
 {
     //指定线程数量
     for(size_t i = 0; i < threadnum; i++)
     {
         threads_.emplace_back([this]()
         {
-            printf("create threads(%d)\n", syscall(SYS_gettid));//显示线程id
+            printf("create %s threads(%d)\n", threadtype_.c_str(), syscall(SYS_gettid));//显示线程id
             while(stop_ == false)
             {
                 std::function<void()> task;;//用于存放出队的元素
@@ -48,7 +48,7 @@ ThreadPool::ThreadPool(size_t threadnum):stop_(false)
                 }
                 /////////////////////////////////////////////////////////////
 
-                printf("thread is %d.\n", syscall(SYS_gettid));
+                printf("%s(%d) execute task.\n", threadtype_.c_str(),syscall(SYS_gettid));
                 task();//执行任务
             }
         });

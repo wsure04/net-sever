@@ -17,7 +17,7 @@ TcpServer::TcpServer(const std::string &ip, uint16_t port, int threadnum):thread
     acceptor_ = new Acceptor(mainloop_, ip, port);
     acceptor_->set_newconnectioncb(std::bind(&TcpServer::newConnection, this, std::placeholders::_1));
 
-    threadpool_ = new ThreadPool(threadnum_); //创建线程池
+    threadpool_ = new ThreadPool(threadnum_, "I/O"); //创建线程池
 
     //创建从事件循环
     for(int i = 0; i < threadnum_; i++)

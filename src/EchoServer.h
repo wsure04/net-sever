@@ -2,14 +2,15 @@
 #include"TcpServer.h"
 #include"EventLoop.h"
 #include"Connection.h"
-
+#include"ThreadPool.h"
 class EchoServer
 {
     private:
         TcpServer tcpserver_;
 
+        ThreadPool threadpool_;//工作线程
     public:
-        EchoServer(const std::string &ip, uint16_t port, int threadnum = 3);
+        EchoServer(const std::string &ip, uint16_t port, int subthreadnum = 3, int worknum = 5);
         ~EchoServer();
 
         void Start();
@@ -21,4 +22,5 @@ class EchoServer
         void handleSendComplete(Connection *conn);//数据发送完成
         void handleTimeout(EventLoop *loop);//epoll_event()超时
         //事件处理函数将在TcpServer类中回调
+        void onMessage(Connection* conn, std::string &message);
 };

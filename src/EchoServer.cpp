@@ -21,7 +21,7 @@ class EchoServer
         //事件处理函数将在TcpServer类中回调
 };
 */
-EchoServer::EchoServer(const std::string &ip, uint16_t port, int threadnum):tcpserver_(ip, port, threadnum)
+EchoServer::EchoServer(const std::string &ip, uint16_t port, int subthreadnum, int worknum):tcpserver_(ip, port, subthreadnum), threadpool_(worknum, "Work")
 {
     tcpserver_.setNewConnectioncb(std::bind(&EchoServer::handleNewConnection, this, std::placeholders::_1));
     tcpserver_.setCloseConnectioncb(std::bind(&EchoServer::handleClose, this, std::placeholders::_1));
@@ -43,7 +43,7 @@ void EchoServer::Start()
 void EchoServer::handleNewConnection(Connection* conn)//处理新客户端连接请求
 {
     std::cout << "New Connection Come in." << std::endl;
-    printf("EchoServe::handleNewConnection() thread is %d.\n", syscall(SYS_gettid));
+    //printf("EchoServe::handleNewConnection() thread is %d.\n", syscall(SYS_gettid));
     //可以增加业务代码
 }
 void EchoServer::handleClose(Connection *conn)//关闭客户端连接 
@@ -56,11 +56,10 @@ void EchoServer::handleError(Connection *conn)//客户端连接错误
 }
 void EchoServer::handleMessage(Connection* conn, std::string &message)//处理客户端的请求报文
 {
-    printf("EchoServer::handleMessage() thread is %d.\n", syscall(SYS_gettid));
-     message = "reply-" + message;
+    //printf("EchoServer::handleMessage() thread is %d.\n", syscall(SYS_gettid));
+    //把业务添加到线程池的任务队列
+    threadpool_.addtask(std::bind(&EchoServer::onMessage, this, conn, message));
 
-    //send(conn->fd(), tmpbuf.data(), len + 4, 0);
-    conn->send(message.data(), message.size());
 }
 void EchoServer::handleSendComplete(Connection *conn)//数据发送完成
 {
@@ -69,4 +68,12 @@ void EchoServer::handleSendComplete(Connection *conn)//数据发送完成
 void EchoServer::handleTimeout(EventLoop *loop)//epoll_event()超时
 {
     std::cout << "EchoServer Timeout." << std::endl;
+}
+
+void EchoServer::onMessage(Connection *conn, std::string &message)
+{
+    message = "reply-" + message;
+
+    //send(conn->fd(), tmpbuf.data(), len + 4, 0);
+    conn->send(message.data(), message.size());
 }
