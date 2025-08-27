@@ -40,28 +40,28 @@ void EchoServer::Start()
     tcpserver_.start();
 }
 
-void EchoServer::handleNewConnection(Connection* conn)//处理新客户端连接请求
+void EchoServer::handleNewConnection(spConnection conn)//处理新客户端连接请求
 {
     std::cout << "New Connection Come in." << std::endl;
     //printf("EchoServe::handleNewConnection() thread is %d.\n", syscall(SYS_gettid));
     //可以增加业务代码
 }
-void EchoServer::handleClose(Connection *conn)//关闭客户端连接 
+void EchoServer::handleClose(spConnection conn)//关闭客户端连接 
 {
     std::cout << "EchoServer Connection close." << std::endl;
 }
-void EchoServer::handleError(Connection *conn)//客户端连接错误
+void EchoServer::handleError(spConnection conn)//客户端连接错误
 {
     std::cout << "EchoServe Connection Error." << std::endl;
 }
-void EchoServer::handleMessage(Connection* conn, std::string &message)//处理客户端的请求报文
+void EchoServer::handleMessage(spConnection conn, std::string &message)//处理客户端的请求报文
 {
     //printf("EchoServer::handleMessage() thread is %d.\n", syscall(SYS_gettid));
     //把业务添加到线程池的任务队列
     threadpool_.addtask(std::bind(&EchoServer::onMessage, this, conn, message));
 
 }
-void EchoServer::handleSendComplete(Connection *conn)//数据发送完成
+void EchoServer::handleSendComplete(spConnection conn)//数据发送完成
 {
     std::cout << "Message Send Complete." << std::endl;
 }
@@ -70,7 +70,7 @@ void EchoServer::handleTimeout(EventLoop *loop)//epoll_event()超时
     std::cout << "EchoServer Timeout." << std::endl;
 }
 
-void EchoServer::onMessage(Connection *conn, std::string &message)
+void EchoServer::onMessage(spConnection conn, std::string &message)
 {
     message = "reply-" + message;
 

@@ -15,7 +15,7 @@ Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clients
 {
     clientchannel_ = new Channel(loop_, clientsock_->fd());
     clientchannel_->setReadCallback(std::bind(&Connection::onMessage, this));
-    clientchannel_->setCloseCallback(std::bind(&Connection::closeCallback, this));
+    clientchannel_->setCloseCallback(std::bind(&Connection::closeCallback,  this));
     clientchannel_->setErrorCallback(std::bind(&Connection::errorCallback, this));
     clientchannel_->setWriteCallback(std::bind(&Connection::writeCallback, this));
     clientchannel_->useET();
@@ -42,12 +42,12 @@ uint16_t Connection::port() const
 
 void Connection::closeCallback()
 {
-   closecallback_(this);
+   closecallback_(shared_from_this());
 }//TCP连接关闭的回调函数， 供Channel回调
 
 void Connection::errorCallback()
 {
-    errorcallback_(this);
+    errorcallback_(shared_from_this());
 }  //TCP连接错误的回调函数，供Channel
 
 void Connection::writeCallback()
@@ -59,26 +59,26 @@ void Connection::writeCallback()
     if(outputbuffer_.size() == 0)
     {
         clientchannel_->disableWriting();
-        sendcompletecallback_(this);//发送完成通知TcpServer层
+        sendcompletecallback_(shared_from_this());//发送完成通知TcpServer层
     }
 } //处理写事件的回调函数 供channel回调
 
-void Connection::setCloseCallback(std::function<void(Connection*)> fn)
+void Connection::setCloseCallback(std::function<void(spConnection)> fn)
 {
     closecallback_ = fn;
 }
 
-void Connection::setErrorCallback(std::function<void(Connection*)> fn)
+void Connection::setErrorCallback(std::function<void(spConnection)> fn)
 {
     errorcallback_ = fn;
 }
 
- void Connection::setOnmessageCallback(std::function<void(Connection*, std::string&)> fn)
+ void Connection::setOnmessageCallback(std::function<void(spConnection, std::string&)> fn)
 {
     onmessagecallback_ = fn;
 }
 
-void Connection::setSendCompleteCallback(std::function<void(Connection*)> fn)
+void Connection::setSendCompleteCallback(std::function<void(spConnection)> fn)
 {
     sendcompletecallback_ = fn;
 }
@@ -124,7 +124,7 @@ void Connection::onMessage()//处理对端发来的消息
                 printf("收到(fd:%d)的报文:%s\n", fd(), message.c_str());
 
                 //假设经过了一些计算 计算不应该在底层类
-               onmessagecallback_(this, message); //调用TcpServer::onMessage()
+               onmessagecallback_(shared_from_this(), message); //调用TcpServer::onMessage()
             }
             break;
         }

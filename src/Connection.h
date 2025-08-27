@@ -5,7 +5,12 @@
 #include"Channel.h"
 #include"EventLoop.h"
 #include"Buffer.h"
-class Connection
+#include<memory>
+
+class Connection;
+using spConnection = std::shared_ptr<Connection>;
+
+class Connection : public std::enable_shared_from_this<Connection>
 {
     private:
         EventLoop *loop_; //事件循环 在构造函数中传入。
@@ -15,10 +20,10 @@ class Connection
         Buffer inputbuffer_; //接收缓冲区
         Buffer outputbuffer_; //发送缓冲区
 
-        std::function<void(Connection*)> closecallback_;
-        std::function<void(Connection*)> errorcallback_;
-        std::function<void(Connection*, std::string&)> onmessagecallback_;
-        std::function<void(Connection*)> sendcompletecallback_;
+        std::function<void(spConnection)> closecallback_;
+        std::function<void(spConnection)> errorcallback_;
+        std::function<void(spConnection, std::string&)> onmessagecallback_;
+        std::function<void(spConnection)> sendcompletecallback_;
     public:
         Connection(EventLoop *loop, Socket *clientsock);
         ~Connection();
@@ -32,14 +37,13 @@ class Connection
         void onMessage();//处理对端发来的消息
         void writeCallback(); //处理写事件的回调函数 供channel回调
 
-        void setCloseCallback(std::function<void(Connection*)> fn);
+        void setCloseCallback(std::function<void(spConnection)> fn);
 
-        void setErrorCallback(std::function<void(Connection*)> fn);
+        void setErrorCallback(std::function<void(spConnection)> fn);
 
-        void setOnmessageCallback(std::function<void(Connection*, std::string&)> fn);
-       
+        void setOnmessageCallback(std::function<void(spConnection, std::string&)> fn);
 
         void send(const char* data, size_t size);
 
-        void setSendCompleteCallback(std::function<void(Connection*)> fn);
+        void setSendCompleteCallback(std::function<void(spConnection)> fn);
 };
