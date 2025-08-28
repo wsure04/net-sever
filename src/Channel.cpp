@@ -64,6 +64,17 @@ void Channel::disableWriting()
     loop_->updateChannel(this);
 }//取消写事件
 
+void Channel::disableAll()
+{
+    events_ = 0;
+    loop_->updateChannel(this);
+}//取消全部事件
+void Channel::remove()
+{
+    disableAll();
+    loop_->removeChannel(this);
+} //从事件循环中删除Channel
+
 void Channel::setInepoll() //设置inepoll未true
 {
     inepoll_ = true;
@@ -95,6 +106,7 @@ void Channel::handleEvent()//事件处理函数
      //处理读写事件
     if(revents_ & EPOLLRDHUP)
     {
+        //remove();    //从事件循环中删除Channel
         closecallback_();
     }
     else if(revents_ & (EPOLLIN|EPOLLPRI))
@@ -107,6 +119,7 @@ void Channel::handleEvent()//事件处理函数
     }
     else//其他是为错误
     {
+        //remove();
         errorcallback_();
     }
 }//事件处理函数 epoll_wait()返回的时候，执行它

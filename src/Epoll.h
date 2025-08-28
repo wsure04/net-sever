@@ -28,4 +28,6 @@ class Epoll
         std::vector<Channel*> loop(int timeout = -1);//运行epoll_wait 发生的事件用vector返回
 
         void updateChannel(Channel* ch);//将Channel添加或更新到红黑树上 Channel中也有fd
+
+        void removeChannel(Channel* ch);
 };

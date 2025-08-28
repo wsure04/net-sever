@@ -32,6 +32,8 @@ class Channel//将channel的地址作为epoll携带的数据
         void disableReading(); //取消读事件
         void enableWriting(); //让epoll_wait监听fd_的写事件
         void disableWriting(); //取消写事件
+        void disableAll();//取消全部事件
+        void remove(); //从事件循环中删除Channel
         void setInepoll(); //设置inepoll未true
         void setRevents(uint32_t ev);//设置revents成员函数
         bool inpoll();

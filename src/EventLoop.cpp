@@ -50,6 +50,11 @@ void EventLoop::updateChannel(Channel* ch)//将Channel添加或更新到红黑�
     ep_->updateChannel(ch);
 }
 
+void EventLoop::removeChannel(Channel* ch)
+{
+    ep_->removeChannel(ch);
+} //从红黑树上删除channel
+
 void EventLoop::setEpollwaitTimeout(std::function<void(EventLoop*)> fn)
 {
     epolltimeoutcallback_ = fn;

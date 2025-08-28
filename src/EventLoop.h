@@ -19,4 +19,6 @@ class EventLoop
 
     void updateChannel(Channel* ch);//将Channel添加或更新到红黑树上 Channel中也有fd
     void setEpollwaitTimeout(std::function<void(EventLoop*)> fn);
+
+    void removeChannel(Channel* ch); //从红黑树上删除channel
 };

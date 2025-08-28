@@ -11,7 +11,7 @@ class Connection
         ~Connection();
 };
 */
-Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clientsock_(clientsock)
+Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clientsock_(clientsock), disconnect_(false)
 {
     clientchannel_ = new Channel(loop_, clientsock_->fd());
     clientchannel_->setReadCallback(std::bind(&Connection::onMessage, this));
@@ -25,6 +25,7 @@ Connection::~Connection()
 {
     delete clientchannel_;
     delete clientsock_;
+    printf("Channel对象已析构\n");
 }
 
 int Connection::fd() const
@@ -42,11 +43,15 @@ uint16_t Connection::port() const
 
 void Connection::closeCallback()
 {
+    disconnect_ = true;
+    clientchannel_->remove();
    closecallback_(shared_from_this());
 }//TCP连接关闭的回调函数， 供Channel回调
 
 void Connection::errorCallback()
 {
+    disconnect_ = true;
+    clientchannel_->remove();
     errorcallback_(shared_from_this());
 }  //TCP连接错误的回调函数，供Channel
 
@@ -129,7 +134,8 @@ void Connection::onMessage()//处理对端发来的消息
             break;
         }
         else if(readn == 0)
-        {    
+        {
+            //clientchannel_->remove();
             closeCallback(); //调用TcpServer::closeCallback()
             break;
         }
@@ -139,6 +145,11 @@ void Connection::onMessage()//处理对端发来的消息
 
 void Connection::send(const char* data, size_t size)
 {
+    if(disconnect_ == true)
+    {
+        printf("客户端连接已断开， 数据未发送。\n");
+        return;
+    }
     outputbuffer_.appendWithHead(data, size);
     clientchannel_->enableWriting();//注册写事件
 }

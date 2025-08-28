@@ -118,3 +118,17 @@ void Epoll::updateChannel(Channel* ch)//将Channel添加或更新到红黑树上
         ch->setInepoll();//设置标志位
     }
 }
+
+//从红黑树上删除channel
+void Epoll::removeChannel(Channel* ch)
+{
+    printf("removeChannel()\n");
+    if(ch->inpoll())//如果channel在树上
+    {
+        if(epoll_ctl(epollfd_, EPOLL_CTL_DEL, ch->fd(), 0) == -1)
+        {
+            printf("epoll_ctl() failed\n");
+            exit(-1);
+        }
+    }
+}
