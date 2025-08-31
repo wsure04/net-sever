@@ -28,45 +28,6 @@ Epoll::~Epoll()//释放句柄
     ::close(epollfd_);
 }//在析构函数中 关闭epollfd
 
-void Epoll::addfd(int fd, uint32_t op)//将监听的fd挂到红黑树上
-{
-    epoll_event ev;
-    ev.events = op;
-    ev.data.fd = fd;
-    if(epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd, &ev) == -1)
-    {
-        printf("epoll_ctl() failed(%d)\n", errno);
-        exit(-1);
-    }
-}//把 fd和监听的事件 添加到红黑树上
-
-/*
-std::vector<epoll_event> Epoll::loop(int timeout)
-{
-    std::vector<epoll_event> evs;//存放epoll_wait返回的事件
-    bzero(events_, sizeof(events_));
-    int infd = epoll_wait(epollfd_, events_, MaxEvents, timeout);
-    if(infd < 0)//事件失败
-    {
-        perror("epoll_wait failed");
-        exit(-1);
-    }
-
-    if(infd == 0)//超时 轮询等待连接
-    {
-        printf("epoll_wait timeout\n");
-        return evs;//返回空的数组对象
-    }
-
-    //成功检测到事件
-    for(int i = 0; i < infd; i++)
-    {
-        evs.push_back(events_[i]);
-    }
-    return evs;
-}//运行epoll_wait 发生的事件用vector返回
-*/
-
 std::vector<Channel*> Epoll::loop(int timeout)//将有时间的fd 封装为channel返回
 {
     std::vector<Channel*> channels;//存放epoll_wait返回的事件
@@ -115,14 +76,14 @@ void Epoll::updateChannel(Channel* ch)//将Channel添加或更新到红黑树上
             printf("epoll_ctl() failed\n");
             exit(-1);
         }
-        ch->setInepoll();//设置标志位
+        ch->setInepoll(true);//设置标志位
     }
 }
 
 //从红黑树上删除channel
 void Epoll::removeChannel(Channel* ch)
 {
-    printf("removeChannel()\n");
+    //printf("removeChannel()\n");
     if(ch->inpoll())//如果channel在树上
     {
         if(epoll_ctl(epollfd_, EPOLL_CTL_DEL, ch->fd(), 0) == -1)

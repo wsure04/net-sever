@@ -1,27 +1,5 @@
 #include"Socket.h"
 
-/*
-class Socket
-{
-    private:
-        const int fd;//Socket持有的fd
-    public:
-        Socket(int fd);
-        ~Socket();
-
-        int fd() const;//返回fd成员
-        void setReuseAddr(bool on);//设置SO_REUSEADDR true-打开
-        void setReusePort(bool on);//设置SO_REUSEPORT true-打开
-        void setTcpNodelay(bool on);//设置TCP_NODELAY true-打开
-        void setKeepAlive(bool on);//设置SO_KEEPALIVE true-打开
-
-        void bind(const InetAddress& serv_addr);
-        void listen(int n = 128);
-        void accept(InetAddress& client_addr);        
-};
-*/
-
-
 int createNonblocking()//获得一个用于监听的套接字 并且设置为非阻塞（用于初始化）
 {
     int listenfd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
@@ -57,7 +35,7 @@ int createNonblocking()//获得一个用于监听的套接字 并且设置为非
     void  Socket::setTcpNodelay(bool on)
     {
         int opt = on ? 1 : 0;
-        ::setsockopt(fd_, SOL_SOCKET, TCP_NODELAY, &opt, sizeof(opt));
+        ::setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
     }//设置TCP_NODELAY true-打开
     void  Socket::setKeepAlive(bool on)//设置保活机制
     {

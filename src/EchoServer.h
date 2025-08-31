@@ -10,7 +10,7 @@ class EchoServer
 
         ThreadPool threadpool_;//工作线程
     public:
-        EchoServer(const std::string &ip, uint16_t port, int subthreadnum = 3, int worknum = 5);
+        EchoServer(const std::string &ip, const uint16_t port, int subthreadnum = 3, int worknum = 5);
         ~EchoServer();
 
         void Start();

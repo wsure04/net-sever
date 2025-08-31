@@ -14,9 +14,9 @@ using spConnection = std::shared_ptr<Connection>;
 class Connection : public std::enable_shared_from_this<Connection>
 {
     private:
-        EventLoop *loop_; //事件循环 在构造函数中传入。
-        Socket *clientsock_;
-        Channel *clientchannel_;
+        const std::unique_ptr<EventLoop>& loop_; //事件循环 在构造函数中传入。
+        std::unique_ptr<Socket> clientsock_; //从外面传进来 但是生命周期由本类管理
+        std::unique_ptr<Channel> clientchannel_;
 
         Buffer inputbuffer_; //接收缓冲区
         Buffer outputbuffer_; //发送缓冲区
@@ -28,25 +28,23 @@ class Connection : public std::enable_shared_from_this<Connection>
         std::function<void(spConnection, std::string&)> onmessagecallback_;
         std::function<void(spConnection)> sendcompletecallback_;
     public:
-        Connection(EventLoop *loop, Socket *clientsock);
+        Connection(const std::unique_ptr<EventLoop>& loop, std::unique_ptr<Socket> clientsock);
         ~Connection();
 
         int fd() const;//返回fd成员
         std::string ip() const;
         uint16_t port() const;
 
+        void onMessage();//处理对端发来的消息
         void closeCallback();   //TCP连接关闭的回调函数， 供Channel回调
         void errorCallback();   //TCP连接错误的回调函数，供Channel
-        void onMessage();//处理对端发来的消息
         void writeCallback(); //处理写事件的回调函数 供channel回调
 
         void setCloseCallback(std::function<void(spConnection)> fn);
-
         void setErrorCallback(std::function<void(spConnection)> fn);
-
         void setOnmessageCallback(std::function<void(spConnection, std::string&)> fn);
+        void setSendCompleteCallback(std::function<void(spConnection)> fn);
 
         void send(const char* data, size_t size);
 
-        void setSendCompleteCallback(std::function<void(spConnection)> fn);
 };

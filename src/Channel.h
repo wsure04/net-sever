@@ -5,15 +5,14 @@
 #include"EventLoop.h"
 #include"InetAddress.h"
 #include"Socket.h"
-
+#include<memory>
 class EventLoop;
 
 class Channel//将channel的地址作为epoll携带的数据
 {
     private:
         int fd_ = -1; //一对一
-        //Epoll *ep_ = nullptr;//channel与epoll多对一 一个channel对应一个epoll
-        EventLoop *loop_ = nullptr;
+        const std::unique_ptr<EventLoop>& loop_;
         bool inepoll_ = false;//channel是否已经添加到红黑树上 如果已经添加 用ADD 否则用MOD
         uint32_t events_ = 0;//fd_需要监视的事件
         uint32_t revents_ = 0;//fd已经发生的事件
@@ -23,7 +22,7 @@ class Channel//将channel的地址作为epoll携带的数据
         std::function<void()> errorcallback_;//fd_发生了错误的回调函数，将回调Connection::errorcallback()
         std::function<void()> writecallback_;
     public:
-        Channel(EventLoop *loop, int fd);
+        Channel(const std::unique_ptr<EventLoop>& loop, int fd);
         ~Channel();
 
         int fd();
@@ -34,7 +33,7 @@ class Channel//将channel的地址作为epoll携带的数据
         void disableWriting(); //取消写事件
         void disableAll();//取消全部事件
         void remove(); //从事件循环中删除Channel
-        void setInepoll(); //设置inepoll未true
+        void setInepoll(bool inepoll); //设置inepoll未true
         void setRevents(uint32_t ev);//设置revents成员函数
         bool inpoll();
         uint32_t events();

@@ -1,23 +1,8 @@
 #include"InetAddress.h"
-/*
-class InetAddress
-{
-    private:
-        struct sockaddr_in addr_;
-    public:
-        InetAddress(const std::string &ip, const uint16_t port);//监听套接字的构造函数
-        InetAddress(const sockaddr_in addr):addr_(addr){};//客户端套接字的构造函数 接收accept的传出参数
-        ~InetAddress();
-
-        const char *ip() const;//返回字符串格式的ip
-        uint16_t port() const;//获取端口号
-        const sockaddr *addr() const;//返回转换的地址 可以用于传入bind
-};
-*/
 
 InetAddress::InetAddress(){};//空的构造函数 用于构造一个空对象 用来接收数据
 
-InetAddress::InetAddress(const std::string &ip, const uint16_t port)//初始化用于连接的结构体
+InetAddress::InetAddress(const std::string &ip, uint16_t port)//初始化用于连接的结构体
 {
     addr_.sin_family = AF_INET;
     addr_.sin_port = htons(port);

@@ -22,9 +22,6 @@ class Epoll
         Epoll();//在构造函数中创建 epollfd
         ~Epoll();//在析构函数中 关闭epollfd
 
-        void addfd(int fd, uint32_t op);//把 fd和监听的事件 添加到红黑树上
-
-        //std::vector<epoll_event> loop(int timeout = -1);//运行epoll_wait 发生的事件用vector返回
         std::vector<Channel*> loop(int timeout = -1);//运行epoll_wait 发生的事件用vector返回
 
         void updateChannel(Channel* ch);//将Channel添加或更新到红黑树上 Channel中也有fd

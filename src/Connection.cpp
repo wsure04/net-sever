@@ -1,19 +1,9 @@
 #include"Connection.h"
-/*
-class Connection
+
+Connection::Connection(const std::unique_ptr<EventLoop>& loop, std::unique_ptr<Socket> clientsock)
+:loop_(loop), clientsock_(std::move(clientsock)), disconnect_(false), clientchannel_(new Channel(loop_, clientsock_->fd()))
 {
-    private:
-        EventLoop *loop_; //事件循环 在构造函数中传入。
-        Socket *clientsock_;
-        Channel *clientchannel_;
-    public:
-        Connection(EventLoop *loop, Socket *clientsock);
-        ~Connection();
-};
-*/
-Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clientsock_(clientsock), disconnect_(false)
-{
-    clientchannel_ = new Channel(loop_, clientsock_->fd());
+    //clientchannel_ = new Channel(loop_, clientsock_->fd());
     clientchannel_->setReadCallback(std::bind(&Connection::onMessage, this));
     clientchannel_->setCloseCallback(std::bind(&Connection::closeCallback,  this));
     clientchannel_->setErrorCallback(std::bind(&Connection::errorCallback, this));
@@ -23,9 +13,9 @@ Connection::Connection(EventLoop *loop, Socket *clientsock):loop_(loop), clients
 }
 Connection::~Connection()
 {
-    delete clientchannel_;
-    delete clientsock_;
-    printf("Channel对象已析构\n");
+    //delete clientchannel_;
+    //delete clientsock_;
+    //printf("Channel对象已析构\n");
 }
 
 int Connection::fd() const
@@ -99,20 +89,14 @@ void Connection::onMessage()//处理对端发来的消息
         
         if(readn > 0)//读取到了数据
         {
-            //printf("接收到数据(来自:%d)：%s\n", fd(), buf);
-            //send(fd(), buf, strlen(buf), 0);
-            //接收到数据之后，先不发送 现放到接收缓冲区
             inputbuffer_.append(buf, readn); //把读取的数据追加到接收缓冲区中
         }
         else if(readn == -1 && errno == EINTR) //数据读取时被信号中断 继续读取
         {
             continue;
         }
-        else if(readn == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))//数据读取完毕 非阻塞立即返回跳出
+        else if(readn == -1 && ((errno == EAGAIN) || (errno == EWOULDBLOCK)))//数据读取完毕 非阻塞立即返回跳出
         {
-            //接收完成
-            //printf("接收到数据(来自:%d)：%s\n", fd(), inputbuffer_.data());
-            //在这里进行计算
             while (1)
             {
                 //这段代码可以封装

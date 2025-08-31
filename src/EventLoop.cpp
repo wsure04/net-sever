@@ -1,5 +1,4 @@
 #include"EventLoop.h"
-
 /*
 //事件循环类
 class EventLoop
@@ -17,7 +16,7 @@ EventLoop::EventLoop():ep_(new Epoll){}//在构造函数中 创建epoll对象
 
 EventLoop::~EventLoop()
 {
-    delete ep_;
+    //delete ep_;
 }//在析构函数中销毁ep对象
 
 void EventLoop::run()
@@ -25,7 +24,7 @@ void EventLoop::run()
     //printf("EventLoop::run() thread is %d.\n", syscall(SYS_gettid));
     while(true)
     {
-        std::vector<Channel*> channels = ep_->loop(10*1000);//等待事件
+        std::vector<Channel*> channels = ep_->loop(60*1000);//等待事件
         
         //如果channels为空，表示超时，回调TcpServer::epolltimeout()
         if(channels.size() == 0)
@@ -55,7 +54,7 @@ void EventLoop::removeChannel(Channel* ch)
     ep_->removeChannel(ch);
 } //从红黑树上删除channel
 
-void EventLoop::setEpollwaitTimeout(std::function<void(EventLoop*)> fn)
+void EventLoop::setEpollTimeoutCallback(std::function<void(EventLoop*)> fn)
 {
     epolltimeoutcallback_ = fn;
 }
