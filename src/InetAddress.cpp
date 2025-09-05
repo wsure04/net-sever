@@ -1,32 +1,43 @@
-#include"InetAddress.h"
+#include "InetAddress.h"
 
-InetAddress::InetAddress(){};//空的构造函数 用于构造一个空对象 用来接收数据
-
-InetAddress::InetAddress(const std::string &ip, uint16_t port)//初始化用于连接的结构体
+InetAddress::InetAddress()
 {
-    addr_.sin_family = AF_INET;
-    addr_.sin_port = htons(port);
-    inet_pton(AF_INET, ip.c_str(), &addr_.sin_addr);
+
 }
-InetAddress::InetAddress(const sockaddr_in addr):addr_(addr){}//客户端套接字的构造函数 接收accept的传出参数
 
-InetAddress::~InetAddress(){}
+InetAddress::InetAddress(const std::string &ip,uint16_t port)      // 如果是监听的fd，用这个构造函数。
+{
+    addr_.sin_family = AF_INET;                                 // IPv4网络协议的套接字类型。
+    addr_.sin_addr.s_addr = inet_addr(ip.c_str());      // 服务端用于监听的ip地址。
+    addr_.sin_port = htons(port);                              // 服务端用于监听的端口。
+}
 
-const char *InetAddress::ip() const
+InetAddress::InetAddress(const sockaddr_in addr):addr_(addr)  // 如果是客户端连上来的fd，用这个构造函数。
 {
-    char str[INET_ADDRSTRLEN];
-    return inet_ntop(AF_INET, &addr_.sin_addr, str, INET_ADDRSTRLEN);
-}//返回字符串格式的ip
-uint16_t InetAddress::port() const
+
+}
+
+InetAddress::~InetAddress()
 {
-   return ntohs(addr_.sin_port);
-}//获取端口号
-const sockaddr *InetAddress::addr() const
+
+}
+
+const char *InetAddress::ip() const                // 返回字符串表示的地址，例如：192.168.150.128
+{
+    return inet_ntoa(addr_.sin_addr);
+}
+
+uint16_t InetAddress::port() const                // 返回整数表示的端口，例如：80、8080
+{
+    return ntohs(addr_.sin_port);
+}
+
+const sockaddr *InetAddress::addr() const   // 返回addr_成员的地址，转换成了sockaddr。
 {
     return (sockaddr*)&addr_;
-}//返回转换的地址 可以用于传入bind
+}
 
-void InetAddress::setAddr(sockaddr_in client_addr)//为InetAddress赋值
+void InetAddress::setaddr(sockaddr_in clientaddr)   // 设置addr_成员的值。
 {
-    addr_ = client_addr;
+    addr_=clientaddr;
 }

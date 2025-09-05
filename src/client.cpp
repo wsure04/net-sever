@@ -1,70 +1,63 @@
-#include<iostream>
-#include<sys/socket.h>
-#include<errno.h>
-#include<string.h>
-#include<time.h>
-#include<arpa/inet.h>
-#include<stdlib.h>
-#include<netinet/in.h>
-#include<netdb.h>
-#include<unistd.h>
+// 网络通讯的客户端程序。
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
-     if(argc != 3)
-     {
-          printf("请输入ip地址 端口号\n");
-          return -1;
-     } 
-
-     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-     if(sockfd < 0)
-     {
-          perror("socket");
-          return -1;
-     }
-     struct sockaddr_in serv_addr;
-     bzero(&serv_addr, sizeof(serv_addr));
-     serv_addr.sin_family = AF_INET;
-     serv_addr.sin_port = htons(atoi(argv[2]));
-     if((inet_pton(AF_INET,  argv[1], &serv_addr.sin_addr)) < 0)
-     {
-        perror("inet_pton");
+    if (argc != 3)
+    {
+        printf("usage:./client ip port\n"); 
+        printf("example:./client 192.168.150.128 5085\n\n"); 
         return -1;
-     }
-   
-     if(connect(sockfd, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
-     {
-        perror("connect()");
-        return -1;
-     }
-     printf("已连接服务器\n");
-     char buf[BUFSIZ];
-     for(int i = 0;i < 1; i++)
-     {
-        bzero(buf, sizeof(buf));
+    }
 
-        sprintf(buf,"这是第%d条报文。", i);
-        //scanf("%s", buf);
+    int sockfd;
+    struct sockaddr_in servaddr;
+    char buf[1024];
+ 
+    if ((sockfd=socket(AF_INET,SOCK_STREAM,0))<0) { printf("socket() failed.\n"); return -1; }
+    
+    memset(&servaddr,0,sizeof(servaddr));
+    servaddr.sin_family=AF_INET;
+    servaddr.sin_port=htons(atoi(argv[2]));
+    servaddr.sin_addr.s_addr=inet_addr(argv[1]);
 
-        char tmpbuf[1024];  //临时的buf 报文头部+报文内容
-        bzero(tmpbuf, sizeof(tmpbuf));
-        int len = strlen(buf);//计算报文大小
-        memcpy(tmpbuf, &len, 4);
-        memcpy(tmpbuf+4, buf, len);
-        send(sockfd, tmpbuf, len+4, 0);
-     }
-     for(int i = 0;i < 1; i++)
-     {
-          int len;
-          recv(sockfd, &len, 4, 0);
+    if (connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr)) != 0)
+    {
+        printf("connect(%s:%s) failed.\n",argv[1],argv[2]); close(sockfd);  return -1;
+    }
 
-          bzero(buf, sizeof(buf));
+    printf("connect ok.\n");
+    // printf("开始时间：%d\n",time(0));
 
-          recv(sockfd, buf, len, 0);
-          
-          printf("接收到数据：%s\n", buf);
+    for (int ii=0;ii<10;ii++)
+    {
+        memset(buf,0,sizeof(buf));
+        sprintf(buf,"这是第%d条报文。",ii);
 
-     }
-     close(sockfd);
-}
+        char tmpbuf[1024];                 // 临时的buffer，报文头部+报文内容。
+        memset(tmpbuf,0,sizeof(tmpbuf));
+        int len=strlen(buf);                 // 计算报文的大小。
+        memcpy(tmpbuf,&len,4);       // 拼接报文头部。
+        memcpy(tmpbuf+4,buf,len);  // 拼接报文内容。
+
+        send(sockfd,tmpbuf,len+4,0);  // 把请求报文发送给服务端。
+        
+        recv(sockfd,&len,4,0);            // 先读取4字节的报文头部。
+
+        memset(buf,0,sizeof(buf));
+        recv(sockfd,buf,len,0);           // 读取报文内容。
+
+        printf("recv:%s\n",buf);
+sleep(1);
+    }
+
+    // printf("结束时间：%d\n",time(0));
+} 

@@ -1,5 +1,5 @@
 target=echo-server client
-SOURCES=InetAddress.cpp Socket.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp Acceptor.cpp Connection.cpp Buffer.cpp EchoServer.cpp ThreadPool.cpp
+SOURCES=InetAddress.cpp Socket.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp Acceptor.cpp Connection.cpp Buffer.cpp EchoServer.cpp ThreadPool.cpp Timestamp.cpp
 all:$(target)
 
 echo-server:echo-server.cpp $(SOURCES)
@@ -8,4 +8,4 @@ client:client.cpp
 	g++ client.cpp -o client
 
 clean:
-	rm -rf $(target)
+	rm -rf $(target) core.*

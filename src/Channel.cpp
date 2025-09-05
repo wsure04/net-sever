@@ -1,121 +1,127 @@
-#include"Channel.h"
-#include"Connection.h"
+#include "Channel.h"
 
-Channel::Channel(const std::unique_ptr<EventLoop>& loop, int fd):loop_(loop), fd_(fd){}//初始化成员变量
-Channel::~Channel()
+Channel::Channel(EventLoop* loop,int fd):loop_(loop),fd_(fd)      // 构造函数。
 {
-    //在析构函数中 不要销毁ep_ fd_ 因为这两个东西不属于Channel类 只是需要他们
-    //避免多次释放
+
 }
 
-int Channel::fd()//返回fd
+Channel::~Channel()                           // 析构函数。 
 {
-    return fd_;   
+    // 在析构函数中，不要销毁loop_，也不能关闭fd_，因为这两个东西不属于Channel类，Channel类只是需要它们，使用它们而已。
 }
 
-void Channel::useET()//设置采用边缘触发
+int Channel::fd()                                            // 返回fd_成员。
 {
-    events_ = events_ | EPOLLET;
+    return fd_;
 }
 
-void Channel::enableReading()//让epoll_wait监听fd_的读事件
+void Channel::useet()                                    // 采用边缘触发。
 {
-    events_ |= EPOLLIN;
-    loop_->updateChannel(this);
+    events_=events_|EPOLLET;
 }
 
-void Channel::disableReading()
+void Channel::enablereading()                     // 让epoll_wait()监视fd_的读事件。
 {
-    events_ &= ~EPOLLIN;
-    loop_->updateChannel(this);
-} //取消读事件
-void Channel::enableWriting()
-{
-    events_ |= EPOLLOUT;
-    loop_->updateChannel(this);
-} //让epoll_wait监听fd_的写事件
-void Channel::disableWriting()
-{
-    events_ &= ~EPOLLOUT;
-    loop_->updateChannel(this);
-}//取消写事件
-
-void Channel::disableAll()
-{
-    events_ = 0;
-    loop_->updateChannel(this);
-}//取消全部事件
-void Channel::remove()
-{
-    disableAll();
-    loop_->removeChannel(this);
-} //从事件循环中删除Channel
-
-void Channel::setInepoll(bool inepoll) //设置inepoll未true
-{
-    inepoll_ = inepoll;
+    events_|=EPOLLIN;
+    loop_->updatechannel(this);
 }
 
-void Channel::setRevents(uint32_t ev)//设置revents成员函数
+void Channel::disablereading()                    // 取消读事件。
 {
-    revents_ = ev;
+    events_&=~EPOLLIN;
+    loop_->updatechannel(this);
 }
 
-bool Channel::inpoll()//返回inepoll
+void Channel::enablewriting()                      // 注册写事件。
 {
-    return inepoll_;   
+    events_|=EPOLLOUT;
+    loop_->updatechannel(this);
 }
 
-uint32_t Channel::events()//返回要监听的事件
+void Channel::disablewriting()                     // 取消写事件。
+{
+    events_&=~EPOLLOUT;
+    loop_->updatechannel(this);
+}
+
+void Channel::disableall()                             // 取消全部的事件。
+{
+    events_=0;
+    loop_->updatechannel(this);
+}
+
+void Channel::remove()                                // 从事件循环中删除Channel。
+{
+    disableall();                                // 先取消全部的事件。
+    loop_->removechannel(this);    // 从红黑树上删除fd。
+}
+
+void Channel::setinepoll(bool inepoll)                           // 设置inepoll_成员的值。
+{
+    inepoll_=inepoll;
+}
+
+void Channel::setrevents(uint32_t ev)         // 设置revents_成员的值为参数ev。
+{
+    revents_=ev;
+}
+
+bool Channel::inpoll()                                  // 返回inepoll_成员。
+{
+    return inepoll_;
+}
+
+uint32_t Channel::events()                           // 返回events_成员。
 {
     return events_;
 }
 
-uint32_t Channel::revents()//返回监听成功的事件
+uint32_t Channel::revents()                          // 返回revents_成员。
 {
     return revents_;
-}
+} 
 
-
-void Channel::handleEvent()//事件处理函数
+// 事件处理函数，epoll_wait()返回的时候，执行它。
+void Channel::handleevent()
 {
-     //处理读写事件
-    if(revents_ & EPOLLRDHUP)
+    if (revents_ & EPOLLRDHUP)                     // 对方已关闭，有些系统检测不到，可以使用EPOLLIN，recv()返回0。
     {
-        //remove();    //从事件循环中删除Channel
-        closecallback_();
-    }
-    else if(revents_ & (EPOLLIN|EPOLLPRI))
+        closecallback_();      // 回调Connection::closecallback()。
+    }                               
+    else if (revents_ & (EPOLLIN|EPOLLPRI))   // 接收缓冲区中有数据可以读。
     {
-        readcallback_();
-    }
-    else if(revents_ & EPOLLOUT)
+        readcallback_();   // 如果是acceptchannel，将回调Acceptor::newconnection()，如果是clientchannel，将回调Connection::onmessage()。
+    }  
+    else if (revents_ & EPOLLOUT)                  // 有数据需要写。
     {
-        writecallback_();
+        writecallback_();      // 回调Connection::writecallback()。     
     }
-    else//其他是为错误
+    else                                                           // 其它事件，都视为错误。
     {
-        //remove();
-        errorcallback_();
+        errorcallback_();       // 回调Connection::errorcallback()。
     }
-}//事件处理函数 epoll_wait()返回的时候，执行它
-
-void Channel::setReadCallback(std::function<void()> fn)//设置回调函数
-{
-    readcallback_ = fn;
 }
 
-void Channel::setCloseCallback(std::function<void()> fn)
-{
-    closecallback_ = fn;
-}
-void Channel::setErrorCallback(std::function<void()> fn)
-{
-    errorcallback_ = fn;   
-}
+ // 设置fd_读事件的回调函数。
+ void Channel::setreadcallback(std::function<void()> fn)    
+ {
+    readcallback_=fn;
+ }
 
+ // 设置关闭fd_的回调函数。
+ void Channel::setclosecallback(std::function<void()> fn)    
+ {
+    closecallback_=fn;
+ }
 
-void Channel::setWriteCallback(std::function<void()> fn)
-{
-    writecallback_ = fn;
-}
+ // 设置fd_发生了错误的回调函数。
+ void Channel::seterrorcallback(std::function<void()> fn)    
+ {
+    errorcallback_=fn;
+ }
+
+ // 设置写事件的回调函数。
+ void Channel::setwritecallback(std::function<void()> fn)   
+ {
+    writecallback_=fn;
+ }
