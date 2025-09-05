@@ -162,6 +162,7 @@ test-results/
 *.kate-swp
 .fuse_hidden*
 .nfs*
+core.*
 
 ###  📌 特别说明 ###
 # 已忽略所有编译产物，请确保：
